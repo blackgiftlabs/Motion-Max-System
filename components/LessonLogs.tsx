@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Search, 
@@ -23,16 +23,104 @@ import {
   X,
   Calendar,
   BookOpen,
-  Mic2
+  Mic2,
+  MessageSquare,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 import { Student, TaskStep, PromptLevel, ProgramRequest } from '../types';
 import { PROMPT_LEVELS } from '../constants';
+
+const COMMENT_SUGGESTIONS = {
+  veryLow: [
+    "The student requires significant physical prompting to engage with tasks.",
+    "Foundational compliance and attention are current primary focus areas.",
+    "High level of frustration observed; task broken into smaller segments.",
+    "Student is beginning to respond to the environment with maximum support.",
+    "Frequent reinforcement required to maintain participation in the activity."
+  ],
+  low: [
+    "Showing emerging interest but relies heavily on direct visual cues.",
+    "Partial physical prompts are needed for the student to complete steps.",
+    "The student is inconsistently responding to simple verbal instructions.",
+    "Slow progress noted in initiation; reinforcement is highly effective today.",
+    "Focusing on decreasing the level of physical support during the session."
+  ],
+  moderate: [
+    "The student is demonstrating moderate independence with frequent gestures.",
+    "Consistently follows the sequence when indirect verbal prompts are given.",
+    "Good attention to task for most of the session duration.",
+    "Some steps mastered, while others require targeted visual prompting.",
+    "Steady progress observed; student is becoming more self-reliant."
+  ],
+  high: [
+    "High level of independence shown; student needs only minimal reminders.",
+    "Successfully generalized the skill across different sets of materials.",
+    "The student initiated steps without prompting in 70% of trials.",
+    "Excellent focus and low latency in response to task instructions.",
+    "Ready to move toward fading prompts entirely for this specific activity."
+  ],
+  mastery: [
+    "The student demonstrated full mastery of the task independently.",
+    "Task completed with 100% accuracy across multiple trials without cues.",
+    "Student is now teaching the skill to peers/modeling effectively.",
+    "Exceptional performance; student is ready for a more complex target.",
+    "Independence score indicates the student has internalized this behavior."
+  ]
+};
+
+const SPEECH_SUGGESTIONS = {
+  veryLow: [
+    "Student is currently non-vocal and relies on physical leading or gestures.",
+    "Limited vocal play observed; primarily uses crying or whining for requests.",
+    "Working on basic eye contact before introducing vocal speech sounds.",
+    "Maximum support needed to elicit even basic vowel-like vocalizations.",
+    "Speech sound production is inconsistently noted during play activities."
+  ],
+  low: [
+    "Student is beginning to echo simple vowels when prompted by the therapist.",
+    "Uses single-word approximations but requires heavy visual cues to initiate.",
+    "The student responds better to tactile cues for correct mouth positioning.",
+    "Showing emerging interest in vocal imitation but latency remains high.",
+    "Occasional spontaneous sounds noted, though not yet functional for mands."
+  ],
+  moderate: [
+    "Communicates basic needs using one or two words with moderate prompting.",
+    "Articulation is improving, though multi-syllabic words still pose a challenge.",
+    "Student is successfully using 3-4 functional mands independently today.",
+    "Responding well to echoic training; fading prompts for familiar objects.",
+    "Communication is becoming more functional in a structured classroom setting."
+  ],
+  high: [
+    "Student is speaking in short phrases with minimal therapist support.",
+    "Clearly articulates wants and needs using functional communication nodes.",
+    "Greatly reduced latency in verbal responses during today's sound trials.",
+    "Beginning to use verbal speech to interact with peers spontaneously.",
+    "Independence in vocal requests is high; articulation is 80% accurate."
+  ],
+  mastery: [
+    "Demonstrates conversational speech and answers complex social questions.",
+    "Fluent communication observed across all speech and sound targets.",
+    "Mastered multi-word sentences and uses speech to explain logical events.",
+    "No prompting required for communication; articulation is clear and precise.",
+    "Ready for advanced intraverbal targets and complex social storytelling."
+  ]
+};
 
 export const LessonLogs: React.FC = () => {
   const { students, user, staff, selectedStudentIdForLog, setSelectedStudentIdForLog, addClinicalLog, clinicalLogs, milestoneRecords, settings } = useStore();
   
   const [searchTerm, setSearchTerm] = useState('');
-  
+
+  // Fix: Explicitly defining isSpecialist and filteredStudents to resolve 'Cannot find name' error
+  const isSpecialist = user?.role === 'SPECIALIST';
+  const filteredStudents = useMemo(() => {
+    return (students || []).filter(s => {
+      if (isSpecialist && s.assignedStaffId !== user?.id) return false;
+      return s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || s.id.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [students, isSpecialist, user, searchTerm]);
+
   const [activeView, setActiveView] = useState<'selection' | 'workspace' | 'history'>(
     selectedStudentIdForLog ? 'workspace' : 'selection'
   );
@@ -48,8 +136,28 @@ export const LessonLogs: React.FC = () => {
   
   const [targetBehavior, setTargetBehavior] = useState('');
   const [method, setMethod] = useState<'Forward Chaining' | 'Backward Chaining' | 'Total Task'>('Total Task');
+  const [teacherComment, setTeacherComment] = useState('');
+  const [speechComment, setSpeechComment] = useState('');
+  const [showTaskSuggestions, setShowTaskSuggestions] = useState(false);
+  const [showSpeechSuggestions, setShowSpeechSuggestions] = useState(false);
+  
+  const taskSuggestionRef = useRef<HTMLDivElement>(null);
+  const speechSuggestionRef = useRef<HTMLDivElement>(null);
   
   const [steps, setSteps] = useState<TaskStep[]>([]);
+
+  // Fix: Adding handleAddStep function to resolve 'Cannot find name' error
+  const handleAddStep = () => {
+    setSteps([
+      ...steps,
+      { id: Math.random().toString(36).substring(7), description: '', trials: Array(10).fill('-') as PromptLevel[] }
+    ]);
+  };
+
+  // Fix: Adding handleRemoveStep function to resolve 'Cannot find name' error
+  const handleRemoveStep = (id: string) => {
+    setSteps(steps.filter(s => s.id !== id));
+  };
 
   useEffect(() => {
     if (settings?.defaultTaskSteps && settings.defaultTaskSteps.length > 0) {
@@ -70,6 +178,15 @@ export const LessonLogs: React.FC = () => {
   const [programRequests, setProgramRequests] = useState<ProgramRequest[]>([
     { id: 'p1', activity: '', echoicTempted: 0, noVerbalTempted: 0, noEchoicNoTempting: 0 }
   ]);
+
+  // Fix: Adding handleAddProgramRequest function to resolve 'Cannot find name' error
+  const handleAddProgramRequest = () => {
+    setProgramRequests([
+      ...programRequests,
+      { id: Math.random().toString(36).substring(7), activity: '', echoicTempted: 0, noVerbalTempted: 0, noEchoicNoTempting: 0 }
+    ]);
+  };
+
   const [goalPerHour, setGoalPerHour] = useState<string>('');
   const [actualHour, setActualHour] = useState<string>('');
 
@@ -86,52 +203,80 @@ export const LessonLogs: React.FC = () => {
     return latest?.overallPercentage || 0;
   }, [milestoneRecords, selectedStudentIdForLog]);
 
-  const filteredStudents = useMemo(() => {
-    return students.filter(s => {
-      const isAssigned = (user?.role === 'SUPER_ADMIN') || s.assignedStaffId === user?.id;
-      if (!isAssigned) return false;
-      return s.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+  const currentIndependence = useMemo(() => {
+    const allTrials = steps.flatMap(s => s.trials);
+    return Math.round((allTrials.filter(t => t === '+').length / (allTrials.length || 1)) * 100);
+  }, [steps]);
+
+  const speechScore = useMemo(() => {
+    let totalEchoic = 0;
+    let totalNonVerbal = 0;
+    let totalIndependent = 0;
+    programRequests.forEach(r => {
+      totalEchoic += r.echoicTempted;
+      totalNonVerbal += r.noVerbalTempted;
+      totalIndependent += r.noEchoicNoTempting;
     });
-  }, [students, user, searchTerm]);
-
-  const handleAddStep = () => {
-    setSteps([...steps, { id: Date.now().toString(), description: '', trials: Array(10).fill('-') }]);
-  };
-
-  const handleRemoveStep = (id: string) => {
-    setSteps(steps.filter(s => s.id !== id));
-  };
-
-  const handleAddProgramRequest = () => {
-    setProgramRequests([...programRequests, { id: Date.now().toString(), activity: '', echoicTempted: 0, noVerbalTempted: 0, noEchoicNoTempting: 0 }]);
-  };
+    const total = totalEchoic + totalNonVerbal + totalIndependent;
+    return total === 0 ? 0 : Math.round((totalIndependent / total) * 100);
+  }, [programRequests]);
 
   const handleSave = async () => {
     if (!selectedStudentIdForLog || !targetBehavior) return;
     setIsSubmitting(true);
     
-    const allTrials = steps.flatMap(s => s.trials);
-    const independentCount = allTrials.filter(t => t === '+').length;
-    const independenceScore = Math.round((independentCount / (allTrials.length || 1)) * 100);
-
     try {
       await addClinicalLog({
         studentId: selectedStudentIdForLog,
         date: new Date().toISOString(),
         targetBehavior,
+        comment: teacherComment,
+        speechComment: speechComment,
         method,
         steps,
         programRequests,
-        independenceScore,
+        independenceScore: currentIndependence,
         staffId: user?.id || 'unknown',
         goalPerHour: parseFloat(goalPerHour) || 0,
         actualHour: parseFloat(actualHour) || 0
       });
       setActiveView('history');
+      setTeacherComment('');
+      setSpeechComment('');
+      setTargetBehavior('');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const getSuggestedTaskComments = () => {
+    if (currentIndependence <= 20) return COMMENT_SUGGESTIONS.veryLow;
+    if (currentIndependence <= 40) return COMMENT_SUGGESTIONS.low;
+    if (currentIndependence <= 60) return COMMENT_SUGGESTIONS.moderate;
+    if (currentIndependence <= 80) return COMMENT_SUGGESTIONS.high;
+    return COMMENT_SUGGESTIONS.mastery;
+  };
+
+  const getSuggestedSpeechComments = () => {
+    if (speechScore <= 20) return SPEECH_SUGGESTIONS.veryLow;
+    if (speechScore <= 40) return SPEECH_SUGGESTIONS.low;
+    if (speechScore <= 60) return SPEECH_SUGGESTIONS.moderate;
+    if (speechScore <= 80) return SPEECH_SUGGESTIONS.high;
+    return SPEECH_SUGGESTIONS.mastery;
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (taskSuggestionRef.current && !taskSuggestionRef.current.contains(event.target as Node)) {
+        setShowTaskSuggestions(false);
+      }
+      if (speechSuggestionRef.current && !speechSuggestionRef.current.contains(event.target as Node)) {
+        setShowSpeechSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (activeView === 'selection' || !selectedStudentIdForLog) {
     return (
@@ -218,60 +363,25 @@ export const LessonLogs: React.FC = () => {
 
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border-2 border-slate-900 shadow-inner">
            <button 
-            onClick={() => setActiveView('workspace')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'workspace' ? 'bg-slate-900 text-white shadow-sm border border-slate-900' : 'text-slate-500 hover:text-ghText'}`}
+            onClick={() => setWorkspaceMode('datasheet')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${workspaceMode === 'datasheet' ? 'bg-slate-900 text-white shadow-sm border border-slate-900' : 'text-slate-500 hover:text-ghText'}`}
            >
-             <Plus size={14} /> New Lesson
+             <FileSpreadsheet size={14} /> Task Analysis
            </button>
            <button 
-            onClick={() => setActiveView('history')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'history' ? 'bg-slate-900 text-white shadow-sm border border-slate-900' : 'text-slate-500 hover:text-ghText'}`}
+            onClick={() => setWorkspaceMode('program')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${workspaceMode === 'program' ? 'bg-slate-900 text-white shadow-sm border border-slate-900' : 'text-slate-500 hover:text-ghText'}`}
            >
-             <History size={14} /> Past Records
+             <Mic2 size={14} /> Speech Sounds
            </button>
         </div>
       </header>
 
       {activeView === 'workspace' && (
         <div className="space-y-8 animate-in fade-in duration-500">
-           {/* Section Selector */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button 
-                onClick={() => setWorkspaceMode('datasheet')}
-                className={`group p-8 border-2 transition-all flex items-center justify-between relative overflow-hidden rounded-2xl ${workspaceMode === 'datasheet' ? 'bg-emerald-50 border-emerald-600 shadow-lg dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-900 border-slate-900 grayscale hover:grayscale-0'}`}
-              >
-                 <div className="flex items-center gap-6">
-                    <div className={`p-4 rounded-xl border-2 border-slate-900 ${workspaceMode === 'datasheet' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                      <FileSpreadsheet size={32} />
-                    </div>
-                    <div className="text-left">
-                       <h4 className="font-black uppercase text-base dark:text-white text-slate-900">Activity Checklist</h4>
-                       <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mt-1">Daily task analysis grid</p>
-                    </div>
-                 </div>
-                 {workspaceMode === 'datasheet' && <CheckCircle2 size={24} className="text-emerald-600" />}
-              </button>
-
-              <button 
-                onClick={() => setWorkspaceMode('program')}
-                className={`group p-8 border-2 transition-all flex items-center justify-between relative overflow-hidden rounded-2xl ${workspaceMode === 'program' ? 'bg-blue-50 border-blue-600 shadow-lg dark:bg-blue-900/20' : 'bg-white dark:bg-slate-900 border-slate-900 grayscale hover:grayscale-0'}`}
-              >
-                 <div className="flex items-center gap-6">
-                    <div className={`p-4 rounded-xl border-2 border-slate-900 ${workspaceMode === 'program' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                      <Mic2 size={32} />
-                    </div>
-                    <div className="text-left">
-                       <h4 className="font-black uppercase text-base dark:text-white text-slate-900">Speech & Sounds</h4>
-                       <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mt-1">Track communication goals</p>
-                    </div>
-                 </div>
-                 {workspaceMode === 'program' && <CheckCircle2 size={24} className="text-blue-600" />}
-              </button>
-           </div>
-
+           
            {workspaceMode === 'datasheet' ? (
              <div className="space-y-8">
-                {/* Lesson Details Container */}
                 <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl p-8 shadow-sm">
                    <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em] mb-8 border-b-2 border-slate-100 dark:border-slate-800 pb-4">Lesson Details</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -299,7 +409,6 @@ export const LessonLogs: React.FC = () => {
                    </div>
                 </div>
 
-                {/* Marking Grid Container */}
                 <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl overflow-hidden shadow-sm">
                    <header className="px-8 py-5 border-b-2 border-slate-900 bg-slate-100 dark:bg-slate-950/50 flex items-center justify-between">
                       <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">Marking Grid (Trials 1-10)</h3>
@@ -367,72 +476,163 @@ export const LessonLogs: React.FC = () => {
                       </table>
                    </div>
                 </div>
+
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl p-8 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <MessageSquare size={18} className="text-blue-600" />
+                      <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">Teacher Observation</h3>
+                    </div>
+                    
+                    <div className="relative" ref={taskSuggestionRef}>
+                      <button 
+                        onClick={() => setShowTaskSuggestions(!showTaskSuggestions)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-[9px] font-black uppercase tracking-widest border-2 border-slate-900 hover:bg-blue-600 hover:text-white transition-all rounded-none"
+                      >
+                        <Sparkles size={14} /> Suggest Comment <ChevronDown size={14} className={showTaskSuggestions ? 'rotate-180' : ''} />
+                      </button>
+
+                      {showTaskSuggestions && (
+                        <div className="absolute bottom-full right-0 mb-2 w-72 bg-white dark:bg-slate-900 border-2 border-slate-900 shadow-2xl z-[500] animate-in slide-in-from-bottom-2">
+                           <header className="px-4 py-2 bg-slate-900 text-white flex items-center justify-between">
+                              <span className="text-[8px] font-black uppercase tracking-widest">Score Matching ({currentIndependence}%)</span>
+                           </header>
+                           <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                              {getSuggestedTaskComments().map((suggestion, idx) => (
+                                <button 
+                                  key={idx}
+                                  onClick={() => { setTeacherComment(suggestion); setShowTaskSuggestions(false); }}
+                                  className="w-full text-left p-3 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors border-b last:border-0 border-slate-100 dark:border-slate-800"
+                                >
+                                  "{suggestion}"
+                                </button>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea 
+                    value={teacherComment}
+                    onChange={e => setTeacherComment(e.target.value)}
+                    placeholder="Write detailed notes about the student's behavior and progress during this session..."
+                    className="w-full p-6 bg-slate-50 dark:bg-slate-950 border-2 border-slate-900 rounded-xl font-medium text-sm outline-none focus:border-blue-600 dark:text-white min-h-[120px] resize-none shadow-inner"
+                  />
+                </div>
              </div>
            ) : (
-             <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl p-8 shadow-sm space-y-10">
-                <header className="border-b-2 border-slate-100 dark:border-slate-800 pb-6">
-                   <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">Speech Monitoring</h3>
-                </header>
+             <div className="space-y-8">
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl p-8 shadow-sm space-y-10">
+                   <header className="border-b-2 border-slate-100 dark:border-slate-800 pb-6">
+                      <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">Speech Monitoring</h3>
+                   </header>
 
-                <div className="overflow-x-auto">
-                   <table className="w-full border-collapse">
-                      <thead className="bg-slate-50 dark:bg-slate-950 text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-white border-b-2 border-slate-900">
-                         <tr>
-                            <th className="px-8 py-5 text-left">Speech Activity / Words</th>
-                            <th className="px-4 py-5 text-center">Helped (Echoic)</th>
-                            <th className="px-4 py-5 text-center">Tried (Non-Verbal)</th>
-                            <th className="px-4 py-5 text-center">Independent</th>
-                            <th className="px-8 py-5 text-right w-16">Remove</th>
-                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                         {programRequests.map((req, rIdx) => (
-                           <tr key={req.id}>
-                              <td className="px-8 py-6">
-                                 <input 
-                                   value={req.activity}
-                                   onChange={e => {
-                                      const next = [...programRequests];
-                                      next[rIdx].activity = e.target.value;
-                                      setProgramRequests(next);
-                                   }}
-                                   placeholder="e.g. Saying 'Water'"
-                                   className="w-full bg-transparent font-bold text-sm outline-none focus:text-blue-600 dark:text-white text-slate-900"
-                                 />
-                              </td>
-                              <td className="px-4 py-6">
-                                 <input type="number" value={req.echoicTempted || ''} onChange={e => { const next = [...programRequests]; next[rIdx].echoicTempted = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
-                              </td>
-                              <td className="px-4 py-6">
-                                 <input type="number" value={req.noVerbalTempted || ''} onChange={e => { const next = [...programRequests]; next[rIdx].noVerbalTempted = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
-                              </td>
-                              <td className="px-4 py-6">
-                                 <input type="number" value={req.noEchoicNoTempting || ''} onChange={e => { const next = [...programRequests]; next[rIdx].noEchoicNoTempting = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
-                              </td>
-                              <td className="px-8 py-6 text-right">
-                                 <button onClick={() => setProgramRequests(programRequests.filter(p => p.id !== req.id))} className="text-slate-300 hover:text-rose-500 p-2"><X size={18}/></button>
-                              </td>
-                           </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
+                   <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                         <thead className="bg-slate-50 dark:bg-slate-950 text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-white border-b-2 border-slate-900">
+                            <tr>
+                               <th className="px-8 py-5 text-left">Speech Activity / Words</th>
+                               <th className="px-4 py-5 text-center">Helped (Echoic)</th>
+                               <th className="px-4 py-5 text-center">Tried (Non-Verbal)</th>
+                               <th className="px-4 py-5 text-center">Independent</th>
+                               <th className="px-8 py-5 text-right w-16">Remove</th>
+                            </tr>
+                         </thead>
+                         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                            {programRequests.map((req, rIdx) => (
+                              <tr key={req.id}>
+                                 <td className="px-8 py-6">
+                                    <input 
+                                      value={req.activity}
+                                      onChange={e => {
+                                         const next = [...programRequests];
+                                         next[rIdx].activity = e.target.value;
+                                         setProgramRequests(next);
+                                      }}
+                                      placeholder="e.g. Saying 'Water'"
+                                      className="w-full bg-transparent font-bold text-sm outline-none focus:text-blue-600 dark:text-white text-slate-900"
+                                    />
+                                 </td>
+                                 <td className="px-4 py-6">
+                                    <input type="number" value={req.echoicTempted || ''} onChange={e => { const next = [...programRequests]; next[rIdx].echoicTempted = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
+                                 </td>
+                                 <td className="px-4 py-6">
+                                    <input type="number" value={req.noVerbalTempted || ''} onChange={e => { const next = [...programRequests]; next[rIdx].noVerbalTempted = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
+                                 </td>
+                                 <td className="px-4 py-6">
+                                    <input type="number" value={req.noEchoicNoTempting || ''} onChange={e => { const next = [...programRequests]; next[rIdx].noEchoicNoTempting = parseInt(e.target.value) || 0; setProgramRequests(next); }} className="w-24 mx-auto text-center font-black font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 p-3 rounded-lg outline-none text-slate-900 dark:text-white" />
+                                 </td>
+                                 <td className="px-8 py-6 text-right">
+                                    <button onClick={() => setProgramRequests(programRequests.filter(p => p.id !== req.id))} className="text-slate-300 hover:text-rose-500 p-2"><X size={18}/></button>
+                                 </td>
+                              </tr>
+                            ))}
+                         </tbody>
+                      </table>
+                   </div>
 
-                <div className="flex flex-col md:flex-row items-end justify-between gap-10 pt-8 border-t-2 border-slate-100 dark:border-slate-800">
-                   <button onClick={handleAddProgramRequest} className="flex items-center gap-3 text-blue-600 font-black uppercase text-[10px] tracking-widest hover:text-blue-700 transition-colors">
-                      <PlusCircle size={20} /> Add Sound Goal
-                   </button>
-                   
-                   <div className="flex gap-6">
-                      <div className="space-y-3">
-                         <label className="text-[9px] font-black uppercase text-slate-900 dark:text-white block ml-1">Session Target</label>
-                         <input value={goalPerHour} onChange={e => setGoalPerHour(e.target.value)} type="number" placeholder="0" className="w-32 bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 rounded-xl p-4 font-black font-mono text-center outline-none focus:border-googleBlue text-slate-900 dark:text-white" />
-                      </div>
-                      <div className="space-y-3">
-                         <label className="text-[9px] font-black uppercase text-slate-900 dark:text-white block ml-1">Actual Score</label>
-                         <input value={actualHour} onChange={e => setActualHour(e.target.value)} type="number" placeholder="0" className="w-32 bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 rounded-xl p-4 font-black font-mono text-center outline-none focus:border-emerald-500 text-slate-900 dark:text-white" />
+                   <div className="flex flex-col md:flex-row items-end justify-between gap-10 pt-8 border-t-2 border-slate-100 dark:border-slate-800">
+                      <button onClick={handleAddProgramRequest} className="flex items-center gap-3 text-blue-600 font-black uppercase text-[10px] tracking-widest hover:text-blue-700 transition-colors">
+                         <PlusCircle size={20} /> Add Sound Goal
+                      </button>
+                      
+                      <div className="flex gap-6">
+                         <div className="space-y-3">
+                            <label className="text-[9px] font-black uppercase text-slate-900 dark:text-white block ml-1">Session Target</label>
+                            <input value={goalPerHour} onChange={e => setGoalPerHour(e.target.value)} type="number" placeholder="0" className="w-32 bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 rounded-xl p-4 font-black font-mono text-center outline-none focus:border-googleBlue text-slate-900 dark:text-white" />
+                         </div>
+                         <div className="space-y-3">
+                            <label className="text-[9px] font-black uppercase text-slate-900 dark:text-white block ml-1">Actual Score</label>
+                            <input value={actualHour} onChange={e => setActualHour(e.target.value)} type="number" placeholder="0" className="w-32 bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 rounded-xl p-4 font-black font-mono text-center outline-none focus:border-emerald-500 text-slate-900 dark:text-white" />
+                         </div>
                       </div>
                    </div>
+                </div>
+
+                {/* Speech Comment Section */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-2xl p-8 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Mic2 size={18} className="text-emerald-600" />
+                      <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">Speech Observation</h3>
+                    </div>
+                    
+                    <div className="relative" ref={speechSuggestionRef}>
+                      <button 
+                        onClick={() => setShowSpeechSuggestions(!showSpeechSuggestions)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-[9px] font-black uppercase tracking-widest border-2 border-slate-900 hover:bg-emerald-600 hover:text-white transition-all rounded-none"
+                      >
+                        <Sparkles size={14} /> Suggest Speech Comment <ChevronDown size={14} className={showSpeechSuggestions ? 'rotate-180' : ''} />
+                      </button>
+
+                      {showSpeechSuggestions && (
+                        <div className="absolute bottom-full right-0 mb-2 w-72 bg-white dark:bg-slate-900 border-2 border-slate-900 shadow-2xl z-[500] animate-in slide-in-from-bottom-2">
+                           <header className="px-4 py-2 bg-slate-900 text-white flex items-center justify-between">
+                              <span className="text-[8px] font-black uppercase tracking-widest">Speech Analysis ({speechScore}%)</span>
+                           </header>
+                           <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                              {getSuggestedSpeechComments().map((suggestion, idx) => (
+                                <button 
+                                  key={idx}
+                                  onClick={() => { setSpeechComment(suggestion); setShowSpeechSuggestions(false); }}
+                                  className="w-full text-left p-3 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 transition-colors border-b last:border-0 border-slate-100 dark:border-slate-800"
+                                >
+                                  "{suggestion}"
+                                </button>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea 
+                    value={speechComment}
+                    onChange={e => setSpeechComment(e.target.value)}
+                    placeholder="Describe student's vocalizations, echoics, and verbal communication during this session..."
+                    className="w-full p-6 bg-slate-50 dark:bg-slate-950 border-2 border-slate-900 rounded-xl font-medium text-sm outline-none focus:border-emerald-600 dark:text-white min-h-[120px] resize-none shadow-inner"
+                  />
                 </div>
              </div>
            )}
@@ -441,12 +641,21 @@ export const LessonLogs: React.FC = () => {
            <div className="fixed bottom-0 left-0 md:left-64 right-0 p-6 bg-slate-900 text-white flex items-center justify-between z-[400] shadow-[0_-20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-500 border-t-2 border-white/10">
               <div className="flex items-center gap-12">
                  <div className="hidden sm:block">
-                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Session Independence</p>
-                    <div className="flex items-center gap-4">
-                       <p className="text-4xl font-black font-mono leading-none tracking-tighter text-emerald-400">
-                          {Math.round((steps.flatMap(s => s.trials).filter(t => t === '+').length / (steps.flatMap(s => s.trials).length || 1)) * 100)}%
-                       </p>
-                       <div className="px-3 py-1 bg-white/10 rounded-lg border border-white/20 text-[9px] font-black uppercase">Calculated Live</div>
+                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Session Summary</p>
+                    <div className="flex items-center gap-6">
+                       <div className="flex items-center gap-2">
+                          <p className="text-4xl font-black font-mono leading-none tracking-tighter text-emerald-400">
+                             {currentIndependence}%
+                          </p>
+                          <span className="text-[7px] uppercase font-black text-slate-500">Tasks</span>
+                       </div>
+                       <div className="h-6 w-px bg-white/20"></div>
+                       <div className="flex items-center gap-2">
+                          <p className="text-4xl font-black font-mono leading-none tracking-tighter text-blue-400">
+                             {speechScore}%
+                          </p>
+                          <span className="text-[7px] uppercase font-black text-slate-500">Speech</span>
+                       </div>
                     </div>
                  </div>
                  <div className="h-10 w-px bg-white/10 hidden md:block"></div>

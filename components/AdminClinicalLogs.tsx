@@ -14,11 +14,11 @@ import {
   FileText,
   Download,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare
 } from 'lucide-react';
 import { Student, SessionLog } from '../types';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { generateStudentReport } from '../utils/reportGenerator';
 
 type TimeFilter = 'Week' | 'Month' | 'Year' | 'All';
 
@@ -56,18 +56,7 @@ export const AdminClinicalLogs: React.FC = () => {
   const handleExportPDF = async () => {
     if (!selectedStudent || !activeLog) return;
     setIsExporting(true);
-    const doc = new jsPDF();
-    doc.text('PROGRESS REPORT', 15, 20);
-    autoTable(doc, {
-      startY: 30,
-      head: [['Step', 'Description', 'Outcome']],
-      body: activeLog.steps.map((s, i) => [
-        (i+1).toString(), 
-        s.description, 
-        s.trials.includes('+') ? 'Achieved' : 'Support'
-      ]),
-    });
-    doc.save(`Report_${selectedStudent.id}.pdf`);
+    await generateStudentReport(selectedStudent, [activeLog], [], `${activeLog.targetBehavior} Report`);
     setIsExporting(false);
   };
 
@@ -132,21 +121,35 @@ export const AdminClinicalLogs: React.FC = () => {
                       {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                    </button>
                 </div>
-                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4">
-                   {activeLog.steps.map((step, idx) => {
-                     const isAchieved = step.trials.includes('+');
-                     return (
-                       <div key={step.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 group hover:bg-slate-50 transition-colors">
-                          <div className="flex items-center gap-4 flex-1 min-w-0">
-                             <span className="font-mono text-[10px] font-bold text-slate-300">{(idx + 1).toString().padStart(2, '0')}</span>
-                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{step.description}</p>
+                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
+                   <div className="space-y-4">
+                      {activeLog.steps.map((step, idx) => {
+                        const isAchieved = step.trials.includes('+');
+                        return (
+                          <div key={step.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 group hover:bg-slate-50 transition-colors">
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <span className="font-mono text-[10px] font-bold text-slate-300">{(idx + 1).toString().padStart(2, '0')}</span>
+                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{step.description}</p>
+                              </div>
+                              <span className={`px-2 py-0.5 border text-[8px] font-black uppercase ${isAchieved ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                                {isAchieved ? 'Achieved' : 'Help Given'}
+                              </span>
                           </div>
-                          <span className={`px-2 py-0.5 border text-[8px] font-black uppercase ${isAchieved ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                             {isAchieved ? 'Achieved' : 'Help Given'}
-                          </span>
-                       </div>
-                     );
-                   })}
+                        );
+                      })}
+                   </div>
+
+                   {activeLog.comment && (
+                      <div className="p-6 bg-blue-50 dark:bg-blue-900/10 border-l-8 border-blue-600">
+                         <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare size={14} className="text-blue-600" />
+                            <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Therapist Notes</span>
+                         </div>
+                         <p className="text-sm font-bold text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                            "{activeLog.comment}"
+                         </p>
+                      </div>
+                   )}
                 </div>
              </div>
            ) : (

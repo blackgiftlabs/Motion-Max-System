@@ -51,6 +51,28 @@ const extractSrcFromHtml = (input: string) => {
   return match ? match[1] : input.trim();
 };
 
+const getFriendlyErrorMessage = (error: any) => {
+  const code = error?.code || '';
+  const message = error?.message || '';
+
+  if (code === 'auth/email-already-in-use') return "This email is already registered in our system.";
+  if (code === 'auth/invalid-email') return "The email format is not valid.";
+  if (code === 'auth/weak-password') return "The password is too simple. Use at least 6 characters.";
+  if (code === 'auth/network-request-failed') return "Internet connection lost. Please check your signal.";
+  if (message.includes('SYSTEM_CONFLICT')) return "A technical conflict occurred. Please try again in a moment.";
+  
+  return "We couldn't save the student right now. Please check the details and try again.";
+};
+
+const generateRandomString = (length: number) => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 type View = 'landing' | 'login' | 'app' | 'careers' | 'shop' | 'verify' | 'apply' | 'tour';
 
 export interface AppNotification {
@@ -82,11 +104,11 @@ interface AppState {
   user: User | null;
   isLoggedIn: boolean;
   view: View;
-  setView: (view: View) => void;
+  setView: (view: View, skipHistory?: boolean) => void;
   login: (role: Role, credentials: { email: string; pass: string }) => Promise<void>;
   logout: () => void;
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: string, skipHistory?: boolean) => void;
   isMobileMenuOpen: boolean;
   toggleMobileMenu: (open?: boolean) => void;
   isNoticesOpen: boolean;
@@ -177,7 +199,12 @@ export const useStore = create<AppState>((set, get) => {
     user: null,
     isLoggedIn: false,
     view: 'landing',
-    setView: (view) => set({ view }),
+    setView: (view, skipHistory = false) => {
+      if (!skipHistory) {
+        window.history.pushState({ view, activeTab: get().activeTab }, '', '');
+      }
+      set({ view });
+    },
     isMobileMenuOpen: false,
     toggleMobileMenu: (open) => set((state) => ({ isMobileMenuOpen: open !== undefined ? open : !state.isMobileMenuOpen })),
     isNoticesOpen: false,
@@ -231,7 +258,12 @@ export const useStore = create<AppState>((set, get) => {
       get().notify('info', 'Logged out.');
     },
     activeTab: 'dashboard',
-    setActiveTab: (activeTab) => set({ activeTab, isMobileMenuOpen: false }),
+    setActiveTab: (activeTab, skipHistory = false) => {
+      if (!skipHistory) {
+        window.history.pushState({ view: get().view, activeTab }, '', '');
+      }
+      set({ activeTab, isMobileMenuOpen: false });
+    },
     initializeData: () => {
       onSnapshot(query(collection(db, 'students'), orderBy('fullName')), (snapshot) => {
         set({ students: snapshot.docs.map(doc => ({ ...doc.data(), firebaseUid: doc.id } as Student)) });
@@ -301,36 +333,69 @@ export const useStore = create<AppState>((set, get) => {
         const count = snapshot.size + 1;
         const formattedId = `MM${count.toString().padStart(3, '0')}`;
         
-        const studentEmail = `${formattedId.toLowerCase()}@motionmax.com`;
-        const finalImageUrl = extractSrcFromHtml(studentData.imageUrl || '');
+        // Generate Guaranteed Unique Suffixes to prevent collision
+        const randS = generateRandomString(4);
+        const randP = generateRandomString(4);
+
+        // System-generated unique emails for Auth login
+        const studentAuthEmail = `s.${formattedId.toLowerCase()}.${randS}@motionmax.edu`;
+        const parentAuthEmail = `p.${formattedId.toLowerCase()}.${randP}@motionmax.edu`;
         
-        const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentEmail, "000000");
+        const finalImageUrl = extractSrcFromHtml(studentData.imageUrl || '');
+
+        // 1. Create Student Auth (using random system email)
+        const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentAuthEmail, "000000");
         const studentUid = studentUserCredential.user.uid;
         
-        const finalStudent = { ...studentData, imageUrl: finalImageUrl, fullName, id: formattedId, firebaseUid: studentUid, totalPaid: 0, healthHistory: [] };
+        // 2. Save Student Profile
+        const finalStudent = { 
+          ...studentData, 
+          imageUrl: finalImageUrl, 
+          fullName, 
+          id: formattedId, 
+          firebaseUid: studentUid, 
+          totalPaid: 0, 
+          healthHistory: [],
+          systemEmail: studentAuthEmail // Store for login reference
+        };
         await setDoc(doc(db, 'students', studentUid), finalStudent);
-        await setDoc(doc(db, 'users', studentUid), { id: studentUid, name: fullName, email: studentEmail, role: 'STUDENT', avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
+        await setDoc(doc(db, 'users', studentUid), { 
+          id: studentUid, 
+          name: fullName, 
+          email: studentAuthEmail, 
+          role: 'STUDENT', 
+          avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` 
+        });
         
-        const parentEmail = studentData.parentEmail.toLowerCase().trim();
-        const usersRef = collection(db, 'users');
-        const parentQuery = query(usersRef, where('email', '==', parentEmail));
-        const parentSnapshot = await getDocs(parentQuery);
-
-        if (parentSnapshot.empty) {
-          const parentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, parentEmail, "000000");
-          const parentUid = parentUserCredential.user.uid;
-          const parentRecord: Parent = { id: parentUid, name: studentData.parentName, email: parentEmail, phone: studentData.parentPhone, address: studentData.homeAddress, studentId: formattedId, studentFullName: fullName, firebaseUid: parentUid };
-          await setDoc(doc(db, 'parents', parentUid), parentRecord);
-          await setDoc(doc(db, 'users', parentUid), { id: parentUid, name: studentData.parentName, email: parentEmail, role: 'PARENT', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentData.parentName}` });
-        } else {
-          get().notify('info', `Linked new child to existing parent account.`);
-        }
+        // 3. Create Parent Auth (using random system email)
+        const parentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, parentAuthEmail, "000000");
+        const parentUid = parentUserCredential.user.uid;
+        const parentRecord: Parent = { 
+          id: parentUid, 
+          name: studentData.parentName, 
+          email: studentData.parentEmail, // real contact email
+          phone: studentData.parentPhone, 
+          address: studentData.homeAddress, 
+          studentId: formattedId, 
+          studentFullName: fullName, 
+          firebaseUid: parentUid,
+          systemEmail: parentAuthEmail // Store for login reference
+        };
+        await setDoc(doc(db, 'parents', parentUid), parentRecord);
+        await setDoc(doc(db, 'users', parentUid), { 
+          id: parentUid, 
+          name: studentData.parentName, 
+          email: parentAuthEmail, 
+          role: 'PARENT', 
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentData.parentName}` 
+        });
         
         await signOut(secondaryAuth);
-        get().notify('success', `Student registered.`);
+        get().notify('success', `Enrollment complete for ${fullName}.`);
       } catch (err: any) { 
         await signOut(secondaryAuth);
-        get().notify('error', err.code === 'auth/email-already-in-use' ? 'This email is already in use.' : err.message); 
+        console.error("Enrollment Error:", err);
+        get().notify('error', getFriendlyErrorMessage(err)); 
       }
     },
     updateStudent: async (uid, data) => {
@@ -339,14 +404,14 @@ export const useStore = create<AppState>((set, get) => {
         if (data.imageUrl) processed.imageUrl = extractSrcFromHtml(data.imageUrl);
         await updateDoc(doc(db, 'students', uid), processed);
         get().notify('success', 'Profile updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     deleteStudent: async (uid) => {
       try {
         await deleteDoc(doc(db, 'students', uid));
         await deleteDoc(doc(db, 'users', uid));
         get().notify('success', 'Student removed.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addStaff: async (staffData) => {
       try {
@@ -358,19 +423,19 @@ export const useStore = create<AppState>((set, get) => {
         const emailSnapshot = await getDocs(emailQuery);
         
         if (!emailSnapshot.empty) {
-          throw new Error('This email is already registered to someone else.');
+          throw { code: 'auth/email-already-in-use' };
         }
 
         const finalImageUrl = extractSrcFromHtml(staffData.imageUrl || '');
         const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, "000000");
         const staffUid = staffCredential.user.uid;
-        await setDoc(doc(db, 'staff', staffUid), { ...staffData, imageUrl: finalImageUrl, fullName, id: staffUid, firebaseUid: staffUid });
+        await setDoc(doc(db, 'staff', staffUid), { ...staffData, imageUrl: finalImageUrl, fullName, id: staffUid, firebaseUid: staffUid, systemEmail: email });
         await setDoc(doc(db, 'users', staffUid), { id: staffUid, name: fullName, email: email, role: staffData.role, avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
         await signOut(secondaryAuth);
         get().notify('success', `Staff member added.`);
       } catch (err: any) { 
         await signOut(secondaryAuth);
-        get().notify('error', err.message); 
+        get().notify('error', getFriendlyErrorMessage(err)); 
       }
     },
     updateStaff: async (id, data) => {
@@ -379,14 +444,14 @@ export const useStore = create<AppState>((set, get) => {
         if (data.imageUrl) processed.imageUrl = extractSrcFromHtml(data.imageUrl);
         await updateDoc(doc(db, 'staff', id), processed);
         get().notify('success', 'Staff updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     deleteStaff: async (id) => {
       try {
         await deleteDoc(doc(db, 'staff', id));
         await deleteDoc(doc(db, 'users', id));
         get().notify('success', 'Staff removed.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     updateUserProfile: async ({ name, password }) => {
       const fbUser = auth.currentUser;
@@ -399,7 +464,7 @@ export const useStore = create<AppState>((set, get) => {
         }
         if (password) await updatePassword(fbUser, password);
         get().notify('success', 'Profile updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addSystemLog: async (action, details) => {
       const u = get().user;
@@ -412,43 +477,43 @@ export const useStore = create<AppState>((set, get) => {
       try {
         await addDoc(collection(db, 'clinical_logs'), { ...logData, staffId: u?.id || 'unknown' });
         get().notify('success', 'Progress saved.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     submitApplication: async (appData) => {
       try {
         await addDoc(collection(db, 'applications'), { ...appData, status: 'Pending', timestamp: new Date().toISOString() });
         get().notify('success', 'Application sent.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     updateApplicationStatus: async (id, status) => {
       try {
         await updateDoc(doc(db, 'applications', id), { status });
         get().notify('success', 'Status updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     submitStudentApplication: async (appData) => {
       try {
         await addDoc(collection(db, 'student_applications'), { ...appData, status: 'Pending', timestamp: new Date().toISOString() });
         get().notify('success', 'Application submitted.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     updateStudentApplicationStatus: async (id, status, reply) => {
       try {
         await updateDoc(doc(db, 'student_applications', id), { status, adminReply: reply });
         get().notify('success', `Status updated.`);
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addShopItem: async (item) => {
       try {
         await addDoc(collection(db, 'shop_items'), item);
         get().notify('success', 'Item added.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     deleteShopItem: async (id) => {
       try {
         await deleteDoc(doc(db, 'shop_items', id));
         get().notify('success', 'Item removed.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addToCart: (item) => {
       const existing = get().cart.find(i => i.id === item.id);
@@ -471,13 +536,13 @@ export const useStore = create<AppState>((set, get) => {
         await addDoc(collection(db, 'orders'), { ...orderData, status: 'Uncollected', timestamp: new Date().toISOString() });
         get().clearCart();
         get().notify('success', 'Order placed.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     updateOrderStatus: async (orderId, status) => {
       try {
         await updateDoc(doc(db, 'orders', orderId), { status });
         get().notify('success', 'Status updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     saveMilestoneRecord: async (record) => {
       try {
@@ -487,25 +552,25 @@ export const useStore = create<AppState>((set, get) => {
           timestamp: new Date().toISOString()
         });
         get().notify('success', 'Record saved.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     saveMilestoneTemplate: async (template) => {
       try {
         await setDoc(doc(db, 'milestone_templates', template.id), template);
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     deleteMilestoneTemplate: async (id) => {
       try {
         await deleteDoc(doc(db, 'milestone_templates', id));
         get().notify('success', 'Template removed.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addPayment: async (payment) => {
       try {
         const hash = Math.random().toString(36).substring(2, 15);
         const qrCodeUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(hash)}`;
         await addDoc(collection(db, 'payments'), { ...payment, verificationHash: hash, qrCodeUrl: qrCodeUrl, timestamp: new Date().toISOString() });
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     addNotice: async (title, content, type, target) => {
       const u = get().user;
@@ -552,7 +617,7 @@ export const useStore = create<AppState>((set, get) => {
         const newEntry = { ...entry, id: Math.random().toString(36).substring(7) };
         await updateDoc(studentRef, { healthHistory: arrayUnion(newEntry) });
         get().notify('success', 'Record added.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
     updateHealthRecordEntry: async (studentUid, entryId, data) => {
       try {
@@ -565,7 +630,7 @@ export const useStore = create<AppState>((set, get) => {
           await updateDoc(studentRef, { healthHistory: updatedHistory });
           get().notify('success', 'Record updated.');
         }
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
     },
   };
 });

@@ -45,6 +45,7 @@ export interface Student {
   firebaseUid?: string;
   totalPaid?: number;
   healthHistory?: MedicalRecordEntry[];
+  systemEmail?: string;
 }
 
 export interface StudentApplication {
@@ -133,6 +134,7 @@ export interface Parent {
   studentId: string;
   studentFullName: string;
   firebaseUid: string;
+  systemEmail?: string;
 }
 
 export interface Staff {
@@ -152,6 +154,7 @@ export interface Staff {
   role: Role;
   assignedClasses: string[];
   imageUrl?: string;
+  systemEmail?: string;
 }
 
 export interface Application {
@@ -223,6 +226,8 @@ export interface SessionLog {
   staffId: string;
   date: string;
   targetBehavior: string;
+  comment?: string;
+  speechComment?: string;
   method: 'Forward Chaining' | 'Backward Chaining' | 'Total Task';
   steps: TaskStep[];
   programRequests?: ProgramRequest[];

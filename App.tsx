@@ -59,7 +59,7 @@ const NotificationHost = () => {
 };
 
 const App: React.FC = () => {
-  const { view, setView, activeTab, isLoggedIn, theme, user, initializeData } = useStore();
+  const { view, setView, activeTab, setActiveTab, isLoggedIn, theme, user, initializeData } = useStore();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -70,6 +70,16 @@ const App: React.FC = () => {
     if (params.has('v')) {
       setView('verify');
     }
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state) {
+        if (event.state.view) setView(event.state.view, true);
+        if (event.state.activeTab) setActiveTab(event.state.activeTab, true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [theme]);
 
   useEffect(() => {
@@ -138,8 +148,8 @@ const App: React.FC = () => {
       
       default:
         return (
-          <div className="flex flex-col items-center justify-center min-h-[400px] text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-12">
-             <div className="w-20 h-20 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6">
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center bg-white dark:bg-slate-900 rounded-none border border-slate-100 dark:border-slate-800 p-12">
+             <div className="w-20 h-20 rounded-none bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6">
                <span className="text-4xl">⚙️</span>
              </div>
              <h2 className="text-2xl font-black uppercase tracking-tight">Module Loading</h2>

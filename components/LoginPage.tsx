@@ -183,12 +183,17 @@ export const LoginPage: React.FC = () => {
       let loginEmail = bypassEmail || email;
       let loginPass = bypassPass || password;
 
+      // Handle Lookup from Profiles
       if (selectedRole === 'STUDENT' && selectedStudentProfile) {
-        loginEmail = `${selectedStudentProfile.firstName.toLowerCase()}.${selectedStudentProfile.lastName.toLowerCase()}@motionmax.com`;
+        loginEmail = selectedStudentProfile.systemEmail || '';
       } else if (selectedRole === 'PARENT' && selectedParentProfile) {
-        loginEmail = selectedParentProfile.email;
+        loginEmail = selectedParentProfile.systemEmail || '';
       } else if (selectedRole === 'SPECIALIST' && selectedStaffProfile) {
-        loginEmail = selectedStaffProfile.email;
+        loginEmail = selectedStaffProfile.systemEmail || selectedStaffProfile.email;
+      }
+
+      if (!loginEmail) {
+        throw new Error('SYSTEM_EMAIL_NOT_FOUND');
       }
 
       await login(selectedRole, { email: loginEmail, pass: loginPass });
@@ -197,8 +202,10 @@ export const LoginPage: React.FC = () => {
       let errorMessage = 'Login failed. Please check your details.';
       if (err.message === 'ROLE_MISMATCH') {
         errorMessage = 'Invalid role selected for this account.';
+      } else if (err.message === 'SYSTEM_EMAIL_NOT_FOUND') {
+        errorMessage = 'System account lookup failed. Please contact administration.';
       }
-      notify('error', errorMessage, 1000);
+      notify('error', errorMessage, 3000);
     } finally {
       setLoading(false);
     }
