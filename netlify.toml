@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 [build]
   command = "vite build"
   publish = "dist"
@@ -8,4 +7,4 @@
   from = "/*"
   to = "/index.html"
   status = 200
->>>>>>> 0b22f3a63b6994949e92e3f108dffa89f37a4fb2
+
