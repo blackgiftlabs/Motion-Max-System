@@ -1,6 +1,0 @@
-<<<<<<< HEAD
-=======
-[build]
-  command = "vite build"
-  publish = "dist"
->>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
