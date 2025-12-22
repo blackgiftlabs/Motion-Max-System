@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 [[redirects]]
   from = "/*"
@@ -13,3 +14,20 @@
   for = "/*.ts"
   [headers.values]
     Content-Type = "application/javascript"
+=======
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*.tsx"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/*.ts"
+  [headers.values]
+    Content-Type = "application/javascript"
+>>>>>>> a4b0bdef5209c4711d150f76ebc5e6ecb36f4b2e
