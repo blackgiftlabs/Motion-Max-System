@@ -5,7 +5,11 @@ import {
   ChevronRight, ArrowUpRight, TrendingUp, Clock,
   FileText, ShieldAlert, Package, Search, Plus,
   UserPlus, BellRing, Settings, Send, Receipt, History, Zap,
+<<<<<<< HEAD
   Filter, DollarSign, Target, Database, ShieldCheck, CalendarDays
+=======
+  Filter, DollarSign, Target, Database, ShieldCheck
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -105,17 +109,28 @@ export const Dashboard: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+<<<<<<< HEAD
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">System Entry Point</span>
           </div>
           <h1 className="text-4xl font-black text-ghText dark:text-white uppercase tracking-tighter leading-none">Management Center</h1>
           <p className="text-sm text-slate-500 mt-3 font-medium italic">Terminal active for {user?.name}. Global metrics are stable.</p>
+=======
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Secure Admin Node</span>
+          </div>
+          <h1 className="text-4xl font-black text-ghText dark:text-white uppercase tracking-tighter leading-none">Management Center</h1>
+          <p className="text-sm text-slate-500 mt-3 font-medium italic">Terminal active for {user?.name}. Global school metrics are stable.</p>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
         </div>
         <div className="flex items-center gap-2 text-xs font-mono bg-ghBg dark:bg-slate-900 border border-ghBorder dark:border-slate-800 px-4 py-2 rounded-xl text-slate-500 shadow-sm">
           <Clock size={14} className="text-googleBlue" /> {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       </header>
 
+<<<<<<< HEAD
       {/* 1. Quick Command Terminal */}
+=======
+      {/* 1. Quick Command Terminal - High Visibility Action Row */}
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
            <Zap size={14} className="text-amber-500 fill-amber-500" />
@@ -142,13 +157,20 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<<<<<<< HEAD
         {/* 3. Main Progress Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
           <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+=======
+        {/* 3. Main Velocity Chart */}
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
+          <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50 flex items-center justify-between">
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
             <div className="flex items-center gap-3">
               <TrendingUp size={18} className="text-googleBlue" />
               <h3 className="text-sm font-black uppercase tracking-widest text-ghText dark:text-white">Activity Growth</h3>
             </div>
+<<<<<<< HEAD
             
             {/* Range Selector - GitHub Style Segmented Control */}
             <div className="flex items-center bg-ghBg dark:bg-slate-800 p-1 rounded-xl border border-ghBorder dark:border-slate-700">
@@ -165,6 +187,8 @@ export const Dashboard: React.FC = () => {
                  <CalendarDays size={14} /> 30 Days
                </button>
             </div>
+=======
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
           </div>
           
           <div className="p-8 h-[350px]">
@@ -177,6 +201,7 @@ export const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d0d7de33" />
+<<<<<<< HEAD
                 <XAxis 
                   dataKey="name" 
                   stroke="#57606a" 
@@ -190,6 +215,12 @@ export const Dashboard: React.FC = () => {
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', fontSize: '10px', fontWeight: 'bold' }} 
                   labelClassName="text-googleBlue"
+=======
+                <XAxis dataKey="name" stroke="#57606a" fontSize={10} axisLine={false} tickLine={false} tick={{ fontWeight: 800 }} />
+                <YAxis stroke="#57606a" fontSize={10} axisLine={false} tickLine={false} tick={{ fontWeight: 800 }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', fontSize: '10px', fontWeight: 'bold' }} 
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
                 />
                 <Area type="monotone" dataKey="sessions" stroke="#1a73e8" strokeWidth={3} fill="url(#colorSessions)" />
               </AreaChart>
@@ -197,11 +228,19 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* 4. Notification Panel */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
             <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50">
               <h3 className="text-sm font-black uppercase tracking-widest dark:text-white">System Feed</h3>
+=======
+        {/* 4. Active Logs List */}
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
+            <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50">
+              <h3 className="text-sm font-black uppercase tracking-widest dark:text-white">System Notifications</h3>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
             </div>
             <div className="p-4 space-y-3">
               {[
@@ -269,12 +308,20 @@ export const Dashboard: React.FC = () => {
               <table className="w-full text-left">
                  <thead className="bg-ghBg/50 dark:bg-slate-950/50 border-b border-ghBorder dark:border-slate-800 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <tr>
+<<<<<<< HEAD
                        <th className="px-8 py-5">System ID / Student</th>
+=======
+                       <th className="px-8 py-5">Registry ID / Student</th>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
                        <th className="px-8 py-5">Assigned Class</th>
                        <th className="px-8 py-5 text-center">Milestone Growth</th>
                        <th className="px-8 py-5">Fees Paid</th>
                        <th className="px-8 py-5">Outstanding</th>
+<<<<<<< HEAD
                        <th className="px-8 py-5 text-right">System Entry</th>
+=======
+                       <th className="px-8 py-5 text-right">Node Entry</th>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -282,7 +329,11 @@ export const Dashboard: React.FC = () => {
                       <tr>
                         <td colSpan={6} className="py-20 text-center">
                            <Database size={48} className="mx-auto text-slate-100 mb-4" />
+<<<<<<< HEAD
                            <p className="text-[10px] font-black uppercase text-slate-300 italic tracking-widest">No matching entry found</p>
+=======
+                           <p className="text-[10px] font-black uppercase text-slate-300 italic tracking-widest">No matching registry found</p>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
                         </td>
                       </tr>
                     ) : filteredStudents.map(student => (
@@ -335,9 +386,15 @@ export const Dashboard: React.FC = () => {
            <div className="p-8 bg-ghBg/30 dark:bg-slate-950/30 border-t border-ghBorder dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3 text-slate-400">
                  <ShieldCheck size={16} className="text-emerald-500" />
+<<<<<<< HEAD
                  <span className="text-[9px] font-black uppercase tracking-widest">Verified Database Sync</span>
               </div>
               <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredStudents.length} Active Records Tracked</p>
+=======
+                 <span className="text-[9px] font-black uppercase tracking-widest">Registry Sync: OK</span>
+              </div>
+              <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredStudents.length} Students Tracked</p>
+>>>>>>> 81314b663b913fa0411b4cd7b60942cd69c1d485
            </div>
         </div>
       </section>
