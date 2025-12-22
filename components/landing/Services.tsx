@@ -81,7 +81,7 @@ export const Services: React.FC = () => {
   const contentOpacity = scrollProgress;
 
   return (
-    <section id="services" className="relative bg-white dark:bg-slate-950 overflow-hidden">
+    <section id="services" className="relative bg-white dark:bg-slate-950 overflow-hidden z-10">
       {/* Intro Section */}
       <div 
         ref={introRef}
