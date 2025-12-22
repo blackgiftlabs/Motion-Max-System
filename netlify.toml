@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 
 [[redirects]]
   from = "/*"
@@ -14,7 +14,7 @@
   for = "/*.ts"
   [headers.values]
     Content-Type = "application/javascript"
-=======
+
 
 [[redirects]]
   from = "/*"
