@@ -30,4 +30,4 @@
   for = "/*.ts"
   [headers.values]
     Content-Type = "application/javascript"
->>>>>>> a4b0bdef5209c4711d150f76ebc5e6ecb36f4b2e
+
