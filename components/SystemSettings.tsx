@@ -73,9 +73,12 @@ export const SystemSettings: React.FC = () => {
   };
 
   const addTemplate = () => {
+    // Fix: Added missing minAge and maxAge properties required by MilestoneTemplate interface
     setEditingTemplate({
       id: `m-${Date.now()}`,
       label: 'New Category',
+      minAge: 0,
+      maxAge: 36,
       sections: [{ title: 'Area of Growth', items: ['New Task Item'] }],
       redFlags: ['Warning sign to watch']
     });

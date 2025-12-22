@@ -112,7 +112,8 @@ export const Sidebar: React.FC = () => {
               }`}
             >
               <span className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#002D50] dark:group-hover:text-blue-400'}`}>
-                {React.cloneElement(item.icon as React.ReactElement, { size: 19 })}
+                {/* Fix: Cast icon to React.ReactElement<any> to resolve size property error during cloneElement */}
+                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 19 })}
               </span>
               <span className="tracking-tight">{item.label}</span>
               {isActive && (
