@@ -16,42 +16,49 @@ Motion Max bridges the gap between clinical excellence and administrative effici
 - `store/useStore.ts`: Real-time state synchronization with Firebase Firestore.
 - `components/`: Modular UI units (Layout, Dashboard, ABA Clinical, Uniform Shop).
 
+---
+
 ## 📦 Deployment on Netlify
 
-This project can be deployed to Netlify as a modern Single Page Application (SPA). 
+This project is built using Vite and React 19, making it highly compatible with Netlify's modern edge platform.
 
-### 1. Build Settings
-If you are using the Vite build system provided in `package.json`:
+### 1. Site Configuration
+When connecting your repository to Netlify, use the following settings:
+
 - **Build Command:** `npm run build`
 - **Publish Directory:** `dist`
+- **Node.js Version:** 20.x or higher (recommended)
 
-If you are serving the files directly using the runtime Babel setup:
-- **Build Command:** *Leave empty*
-- **Publish Directory:** `.`
+### 2. Environment Variables
+The application requires specific API keys to function. Add these in **Site settings > Environment variables**:
 
-### 2. Required Configuration (netlify.toml)
-Create a `netlify.toml` file in the project root to handle SPA routing and ensure `.tsx` files are served correctly if not building:
+| Variable | Description |
+| :--- | :--- |
+| `API_KEY` | Your Google Gemini API Key (Required for AI features) |
 
+### 3. Handling Client-Side Routing
+Since this is a Single Page Application (SPA), you must ensure that all navigation requests are redirected to `index.html`. Create a `public/_redirects` file (or `netlify.toml`) with the following content:
+
+```text
+/*  /index.html  200
+```
+
+Or in `netlify.toml`:
 ```toml
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[[headers]]
-  for = "/*.tsx"
-  [headers.values]
-    Content-Type = "application/javascript"
-
-[[headers]]
-  for = "/*.ts"
-  [headers.values]
-    Content-Type = "application/javascript"
 ```
 
-### 3. Environment Variables
-Ensure the following environment variables are set in the Netlify UI under **Site settings > Environment variables**:
-- `API_KEY`: Your Google Gemini API Key (required for AI features).
+### 4. 🛠 Troubleshooting: EINTEGRITY Error
+If your build fails with an `EINTEGRITY` error (checksum mismatch), it is likely due to a corrupted or stale `package-lock.json`. 
+
+**Fix:**
+1. Delete your local `package-lock.json` and `node_modules`.
+2. Run `npm install` again to generate a fresh lockfile.
+3. Commit and push the new `package-lock.json`.
+4. If the error persists on Netlify, go to the **Deploys** tab and select **"Clear cache and deploy site"**.
 
 ---
-© 2025 Motion Max Day Services. Built for clinical excellence.
+© 2025 Motion Max Day Services. Built for clinical excellence in Harare.
