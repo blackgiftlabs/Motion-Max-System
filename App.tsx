@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { AppShell } from './components/common/AppShell';
 import { LandingPage } from './components/landing/LandingPage';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from '@/components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { TherapistDashboard } from './components/TherapistDashboard';
 import { StaffManagement } from './components/StaffManagement';
