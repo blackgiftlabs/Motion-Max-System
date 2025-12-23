@@ -13,7 +13,6 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
-      
       const sections = ['services', 'story', 'contact'];
       const scrollPos = window.scrollY + 200;
 
@@ -33,19 +32,20 @@ export const Header: React.FC = () => {
 
   const BrandLogo = () => (
     <div 
-      className="flex items-center gap-3 group cursor-pointer" 
+      className="flex items-center gap-1.5 sm:gap-3 group cursor-pointer flex-shrink-0" 
       onClick={() => {
         setView('landing');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
     >
-      <div className="relative">
-        <img src={LogoImg} alt="Motion Max" className="h-10 md:h-12 w-auto transition-transform duration-500 group-hover:rotate-[360deg]" />
+      <div className="relative flex-shrink-0">
+        {/* Logo scales down on smallest screens */}
+        <img src={LogoImg} alt="Motion Max" className="h-8 w-auto xs:h-10 md:h-12 transition-transform duration-500 group-hover:rotate-[360deg]" />
         <div className="absolute -inset-1 bg-googleBlue/20 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
-      <div className="flex flex-col justify-center">
-        <span className="font-black text-xl md:text-2xl tracking-tighter text-slate-900 dark:text-white leading-none">MOTION MAX</span>
-        <span className="text-[8px] md:text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 block tracking-[0.4em] mt-1">Day Services</span>
+      <div className="flex flex-col justify-center whitespace-nowrap">
+        <span className="font-black text-sm xs:text-lg md:text-2xl tracking-tighter text-slate-900 dark:text-white leading-none">MOTION MAX</span>
+        <span className="text-[7px] md:text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 block tracking-[0.2em] md:tracking-[0.4em] mt-0.5 md:mt-1">Day Services</span>
       </div>
     </div>
   );
@@ -65,22 +65,15 @@ export const Header: React.FC = () => {
     } else {
       if (view !== 'landing') {
         setView('landing');
-        // Wait for landing components to mount before scrolling
         setTimeout(() => {
           const element = document.getElementById(link.id);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-          } else if (link.id === 'home') {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
+          if (element) element.scrollIntoView({ behavior: 'smooth' });
+          else if (link.id === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 150);
       } else {
         const element = document.getElementById(link.id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        } else if (link.id === 'home') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+        else if (link.id === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
     setIsMobileMenuOpen(false);
@@ -88,15 +81,19 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+      <header className={`fixed top-0 w-full z-50 transition-all duration-500 flex items-center ${
         scrolled 
           ? 'h-16 md:h-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-xl' 
           : 'h-20 md:h-24 bg-transparent border-b border-transparent'
       }`}>
-        <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-6 md:px-12">
+        {/* mx-auto and px used to prevent edge-touching, but flex-nowrap keeps it in one line */}
+        <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between px-4 sm:px-6 md:px-12 gap-2">
+          
           <BrandLogo />
           
-          <nav className="hidden lg:flex items-center bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm shadow-inner">
+          {/* Tablet & Desktop Nav: Breakpoint changed to xl for the full pill, 
+              but we use 'lg' with smaller padding to keep it visible longer */}
+          <nav className="hidden xl:flex items-center bg-slate-100/50 dark:bg-slate-900/50 p-1 rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm flex-shrink min-w-0">
             {navLinks.map(link => {
               const isActive = (link.type === 'scroll' && activeSection === link.id && view === 'landing') || 
                               (link.type === 'view' && view === link.id);
@@ -105,36 +102,29 @@ export const Header: React.FC = () => {
                 <button 
                   key={link.id} 
                   onClick={() => handleNavClick(link)}
-                  className={`relative px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-500 rounded-full group ${
+                  className={`relative px-3 2xl:px-6 py-2 text-[10px] 2xl:text-[11px] font-black uppercase tracking-[0.1em] 2xl:tracking-[0.2em] transition-all duration-500 rounded-full group whitespace-nowrap flex-shrink-0 ${
                     isActive 
                       ? 'text-white' 
                       : 'text-slate-900 dark:text-slate-300 hover:text-googleBlue dark:hover:text-white'
                   }`}
                 >
-                  {/* Innovative Active Pill Background */}
                   {isActive && (
-                    <div className="absolute inset-0 bg-slate-900 dark:bg-blue-600 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.3)] dark:shadow-[0_4px_15px_rgba(37,99,235,0.4)] animate-in zoom-in-90 duration-300"></div>
+                    <div className="absolute inset-0 bg-slate-900 dark:bg-blue-600 rounded-full shadow-lg animate-in zoom-in-90 duration-300"></div>
                   )}
-                  
-                  {/* Hover Underline effect */}
-                  {!isActive && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-googleBlue transition-all duration-300 group-hover:w-1/2"></div>
-                  )}
-                  
                   <span className="relative z-10">{link.label}</span>
                 </button>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-5">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
             <button 
               onClick={() => setView('shop')}
-              className="relative p-3 text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all group"
+              className="relative p-2 sm:p-3 text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all group"
             >
-              <ShoppingCart id="common-header-cart" size={20} className="group-hover:scale-110 transition-transform" />
+              <ShoppingCart id="common-header-cart" size={18} className="md:size-[20px] group-hover:scale-110 transition-transform" />
               {cart.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-googleBlue text-white text-[9px] font-black rounded-full flex items-center justify-center ring-4 ring-white dark:ring-slate-950 animate-in zoom-in">
+                <span className="absolute top-1 right-1 w-4 h-4 md:w-5 md:h-5 bg-googleBlue text-white text-[8px] md:text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-950 animate-in zoom-in">
                   {cart.length}
                 </span>
               )}
@@ -142,65 +132,62 @@ export const Header: React.FC = () => {
             
             <button 
               onClick={toggleTheme} 
-              className="p-3 rounded-2xl text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group"
+              className="p-2 sm:p-3 rounded-xl text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             >
               {theme === 'light' 
-                ? <Moon size={20} className="group-hover:rotate-[20deg] transition-transform" /> 
-                : <Sun size={20} className="group-hover:rotate-[45deg] transition-transform" />
+                ? <Moon size={18} className="md:size-[20px]" /> 
+                : <Sun size={18} className="md:size-[20px]" />
               }
             </button>
             
-            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block"></div>
 
             <button 
               onClick={() => setView('login')}
-              className="hidden sm:flex items-center gap-3 bg-slate-900 dark:bg-blue-600 text-white px-8 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 group relative overflow-hidden"
+              className="hidden lg:flex items-center gap-2 bg-slate-900 dark:bg-blue-600 text-white px-4 xl:px-8 py-2.5 xl:py-3.5 rounded-xl text-[10px] xl:text-[11px] font-black uppercase tracking-widest transition-all shadow-lg hover:scale-105 whitespace-nowrap"
             >
-              <span className="relative z-10">Login Portal</span>
-              <ChevronRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <span className="relative z-10">Portal</span>
+              <ChevronRight size={14} className="relative z-10 group-hover:translate-x-1 transition-transform" />
             </button>
             
-            <button className="lg:hidden p-3 text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-2xl" onClick={() => setIsMobileMenuOpen(true)}>
-              <Menu size={24} />
+            {/* Mobile Menu Toggle - appears earlier (at xl) to prevent nav crowding */}
+            <button className="xl:hidden p-2 sm:p-3 text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl" onClick={() => setIsMobileMenuOpen(true)}>
+              <Menu size={20} className="sm:size-[24px]" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Menu - Enhanced Experience */}
+      {/* Mobile Menu - Remains unchanged as it is a fullscreen overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 lg:hidden flex flex-col animate-in fade-in duration-500">
-          <div className="p-8 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 xl:hidden flex flex-col animate-in fade-in duration-500">
+          <div className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
             <BrandLogo />
-            <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-white active:scale-90 transition-all">
-              <X size={32} />
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-white">
+              <X size={28} />
             </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-8 space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-8">Main Navigation</p>
+          <div className="flex-1 overflow-y-auto p-8 space-y-2">
             {navLinks.map((link, idx) => (
               <button 
                 key={link.id} 
                 onClick={() => handleNavClick(link)}
-                className="w-full group flex items-center justify-between py-6 text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white border-b border-slate-50 dark:border-slate-900 transition-all hover:pl-4 hover:text-googleBlue"
-                style={{ animationDelay: `${idx * 50}ms` }}
+                className="w-full group flex items-center justify-between py-5 text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white border-b border-slate-50 dark:border-slate-900"
               >
                 <span>{link.label}</span>
-                <ChevronRight className="opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all" size={32} />
+                <ChevronRight size={24} />
               </button>
             ))}
           </div>
 
-          <div className="p-8 bg-slate-50 dark:bg-slate-900 space-y-6">
+          <div className="p-8 bg-slate-50 dark:bg-slate-900">
             <button 
-              onClick={() => setView('login')}
-              className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-2xl text-xl font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-all"
+              onClick={() => { setView('login'); setIsMobileMenuOpen(false); }}
+              className="w-full bg-slate-900 dark:bg-blue-600 text-white py-5 rounded-2xl text-lg font-black uppercase tracking-widest shadow-2xl"
             >
               Access Portal
             </button>
-            <p className="text-center text-[9px] font-bold text-slate-400 tracking-[0.5em] uppercase">Motion Max Terminal v3.1.4</p>
           </div>
         </div>
       )}
