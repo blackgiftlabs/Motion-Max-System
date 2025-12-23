@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useStore } from '../store/useStore';
-import { Role, Student, Parent, Staff } from '../types';
+import { useStore } from './store/useStore';
+import { Role, Student, Parent, Staff } from './types';
 import { Mail, Lock, ShieldCheck, Activity, Users, Loader2, ArrowLeft, GraduationCap, ChevronRight, Search, Zap } from 'lucide-react';
 import * as THREE from 'three';
 
