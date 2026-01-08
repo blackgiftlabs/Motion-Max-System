@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
-import { Role } from '../types';
+import { useStore } from './store/useStore';
+import { Role } from './types';
 import { ChevronLeft, Mail, Lock, CheckCircle2, ShieldCheck, Activity, AlertCircle } from 'lucide-react';
 
 const LogoImg = "https://i.ibb.co/1ftNnHrx/motionmaxlgo6.png";
@@ -20,21 +20,18 @@ export const LoginPage: React.FC = () => {
     { id: 'PARENT', label: 'Student / Parent', desc: 'View reports & progress' },
   ];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    // Simulate a slightly more realistic auth delay (Firebase logic simulation)
-    setTimeout(() => {
-      const success = login(selectedRole, { email, pass: password });
-      if (!success) {
-        setError('Invalid terminal credentials. Please verify and retry.');
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    }, 1500);
+    try {
+      await login(selectedRole, { email, pass: password });
+    } catch (err: any) {
+      setError('Invalid terminal credentials. Please verify and retry.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const BrandLogo = ({ light }: { light?: boolean }) => (
