@@ -7,7 +7,7 @@ import {
   Check, ChevronRight, Target,
   Clock, Download, Info,
   CreditCard, Bell, FileText,
-  BadgeCheck, Loader2, X, MessageSquare, Send, History
+  BadgeCheck, Loader2, X, MessageSquare, Send, History as HistoryIcon
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell
@@ -141,29 +141,29 @@ export const StudentDashboard: React.FC = () => {
            </div>
            <span className="text-[8px] font-mono font-bold text-slate-400">NODE_V3.1 // SYNC_STABLE</span>
         </div>
-        {/* Margin 3px left/right as requested */}
+        {/* Darkened lines and labels for maximum light-mode legibility */}
         <div className="mx-[3px] mt-2 mb-1 h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={activityPulseData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="0" vertical={false} stroke="#24292f" strokeOpacity={0.2} />
+              <CartesianGrid strokeDasharray="0" vertical={false} stroke="#000000" strokeOpacity={0.15} />
               <XAxis 
                 dataKey="name" 
-                axisLine={{ stroke: '#24292f', strokeWidth: 2 }} 
+                axisLine={{ stroke: '#000000', strokeWidth: 2 }} 
                 tickLine={false} 
-                tick={{ fontSize: 9, fontWeight: 900, fill: '#24292f' }} 
+                tick={{ fontSize: 9, fontWeight: 900, fill: '#000000' }} 
               />
               <YAxis 
-                axisLine={{ stroke: '#24292f', strokeWidth: 2 }} 
+                axisLine={{ stroke: '#000000', strokeWidth: 2 }} 
                 tickLine={false} 
-                tick={{ fontSize: 9, fontWeight: 900, fill: '#24292f' }} 
+                tick={{ fontSize: 9, fontWeight: 900, fill: '#000000' }} 
               />
               <Tooltip 
                 cursor={{ fill: '#f6f8fa' }} 
-                contentStyle={{ borderRadius: '0', border: '1px solid #24292f', boxShadow: 'none', fontSize: '9px', fontWeight: 'bold' }} 
+                contentStyle={{ borderRadius: '0', border: '1px solid #000000', boxShadow: 'none', fontSize: '9px', fontWeight: 'bold' }} 
               />
               <Bar dataKey="sessions" radius={0} barSize={32}>
                 {activityPulseData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={index === activityPulseData.length - 1 ? '#1a73e8' : '#24292f'} fillOpacity={index === activityPulseData.length - 1 ? 1 : 0.1} />
+                  <Cell key={`cell-${index}`} fill={index === activityPulseData.length - 1 ? '#1a73e8' : '#000000'} fillOpacity={index === activityPulseData.length - 1 ? 1 : 0.15} />
                 ))}
               </Bar>
             </BarChart>
@@ -224,7 +224,7 @@ export const StudentDashboard: React.FC = () => {
         {/* 5. Report History Registry */}
         <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 shadow-sm space-y-4">
            <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
-              <History size={12} /> Clinical Reports
+              <HistoryIcon size={12} /> Clinical Reports
            </h3>
            <div className="space-y-1 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
               {studentMilestones.length === 0 ? (

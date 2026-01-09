@@ -7,7 +7,7 @@ import {
   Search, 
   ArrowLeft, 
   Plus, 
-  History,
+  History as HistoryIcon,
   CheckCircle2,
   XCircle,
   Activity,
@@ -223,7 +223,7 @@ export const ClinicalABA: React.FC = () => {
             onClick={() => { setActiveTab('history'); setActiveTemplateId(null); }}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
            >
-             <History size={14} /> History
+             <HistoryIcon size={14} /> History
            </button>
         </div>
       </header>
@@ -351,7 +351,7 @@ export const ClinicalABA: React.FC = () => {
                                  <button 
                                   key={id}
                                   onClick={() => toggleFlag(id)}
-                                  className={`flex items-start gap-4 p-5 rounded-[2rem] border-2 transition-all text-left ${isChecked ? 'bg-white border-rose-500 shadow-xl scale-105 z-10' : 'bg-white/40 dark:bg-slate-900 border-dashed border-rose-200 dark:border-rose-800 opacity-60 hover:opacity-100'}`}
+                                  className={`flex items-start gap-4 p-5 rounded-[2rem] border-2 transition-all text-left ${isChecked ? 'bg-white border-rose-500 shadow-xl scale-105 z-10' : 'bg-white/40 dark:bg-slate-900 border-dashed border-rose-200 dark:border-slate-800 opacity-60 hover:opacity-100'}`}
                                  >
                                     <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${isChecked ? 'bg-rose-600 border-rose-600 text-white shadow-inner' : 'bg-white dark:bg-slate-800 border-rose-200'}`}>
                                        {isChecked && <X size={14} strokeWidth={4} />}
@@ -537,7 +537,7 @@ export const ClinicalABA: React.FC = () => {
                       <div className="space-y-3">
                          {viewingRecord.redFlags.filter(f => f.checked).map((flag, idx) => (
                            <div key={idx} className="p-6 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800 rounded-[1.5rem] flex items-center gap-4 text-rose-700 dark:text-rose-400 shadow-sm animate-in slide-in-from-bottom-2">
-                              {/* Fix: Import AlertCircle from lucide-react */}
+                              {/* Fix: Aliased Global shadowing */}
                               <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm"><AlertCircle size={20} className="shrink-0" /></div>
                               <p className="text-sm font-bold leading-relaxed">{flag.text}</p>
                            </div>
@@ -547,7 +547,7 @@ export const ClinicalABA: React.FC = () => {
                  )}
               </div>
               
-              <footer className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <footer className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
                  <button onClick={() => setViewingRecord(null)} className="w-full py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 transition-all">Close Report</button>
               </footer>
            </aside>
