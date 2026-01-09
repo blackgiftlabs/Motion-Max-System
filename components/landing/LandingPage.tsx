@@ -5,7 +5,6 @@ import { Header } from './Header';
 import { Hero } from './Hero';
 import { Services } from './Services';
 import { Footer } from './Footer';
-import { CareersPage } from './CareersPage';
 import { UniformShop } from '../UniformShop';
 import { SchoolTour } from './SchoolTour';
 
@@ -169,8 +168,6 @@ export const LandingPage: React.FC = () => {
             <TeamCarousel />
 
           </>
-        ) : view === 'careers' ? (
-          <CareersPage />
         ) : view === 'shop' ? (
           <div className="max-w-7xl mx-auto pt-40 pb-32">
              <UniformShop />

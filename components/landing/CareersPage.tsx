@@ -1,10 +1,13 @@
 
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Briefcase, Upload, Send, FileText, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { Header } from './Header';
+import { Upload, Send, CheckCircle2, Loader2, ArrowLeft, ChevronDown } from 'lucide-react';
+
+const CareerHeroImg = "https://i.ibb.co/zVt6rHr6/33781.jpg";
 
 export const CareersPage: React.FC = () => {
-  const { submitApplication, notify } = useStore();
+  const { setView, submitApplication, notify } = useStore();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   
@@ -40,16 +43,15 @@ export const CareersPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.cvBase64) {
-      notify('error', 'Please upload your CV before submitting.');
+      notify('error', 'Please upload your CV (resume) first.');
       return;
     }
     setLoading(true);
     try {
       await submitApplication(formData);
       setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      notify('error', 'Failed to send application. Please try again.');
+      notify('error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -57,165 +59,199 @@ export const CareersPage: React.FC = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen pt-40 pb-20 px-6 flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in duration-700">
-        <div className="w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-full flex items-center justify-center shadow-2xl">
-          <CheckCircle2 size={48} />
+      <div className="h-screen bg-white dark:bg-slate-950 flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700">
+          <div className="max-w-xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-12 text-center space-y-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
+            <div className="w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-none flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 size={48} />
+            </div>
+            <div className="space-y-4">
+              <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white leading-none">Thank You</h1>
+              <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed italic">
+                We received your application. Our team will look at your CV and call you if we want to talk more.
+              </p>
+            </div>
+            <button 
+              onClick={() => setView('landing')}
+              className="w-full py-5 bg-black dark:bg-blue-600 text-white rounded-none font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-googleBlue transition-all active:scale-95"
+            >
+              Back to Home
+            </button>
+          </div>
         </div>
-        <div className="space-y-4">
-          <h1 className="text-4xl font-black uppercase tracking-tight dark:text-white">Application Sent</h1>
-          <p className="text-slate-500 max-w-md mx-auto font-medium">
-            Thank you for applying to Motion Max. Our team will review your CV and contact you if you are a good match for our school.
-          </p>
-        </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="px-10 py-4 bg-brandNavy text-white font-black uppercase tracking-widest text-xs hover:bg-black transition-all"
-        >
-          Back to Careers
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-6 bg-grid-pattern">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20">
-        {/* Info Side */}
-        <div className="space-y-12">
-          <header className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full border border-blue-100 dark:border-blue-800">
-              <Briefcase size={14} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Join our team</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight dark:text-white">
-              Work With <br /> <span className="text-brandNavy dark:text-blue-400">Our Students</span>
-            </h1>
-            <p className="text-lg text-slate-500 font-medium leading-relaxed italic">
-              "We are looking for kind and dedicated people who want to help children with special needs grow and learn in Zimbabwe."
-            </p>
-          </header>
-
-          <div className="space-y-8">
-            <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm">
-               <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-brandNavy dark:text-blue-400">Open Job Positions</h3>
-               <div className="space-y-4">
-                  {['Behavioral Therapist', 'Junior Teacher', 'Office Assistant', 'School Nurse'].map(pos => (
-                    <div key={pos} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-transparent hover:border-brandNavy transition-all group">
-                       <span className="text-sm font-bold uppercase tracking-tight">{pos}</span>
-                       <ArrowRight size={16} className="text-slate-300 group-hover:text-brandNavy group-hover:translate-x-1 transition-all" />
-                    </div>
-                  ))}
-               </div>
-            </div>
-
-            <div className="p-8 bg-brandNavy rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
-               <FileText className="absolute -right-8 -bottom-8 text-white/5" size={160} />
-               <h4 className="text-lg font-black uppercase tracking-widest mb-4">What you need</h4>
-               <ul className="space-y-3 text-sm text-blue-100/80 font-medium">
-                  <li>• Experience working with children</li>
-                  <li>• A kind and patient attitude</li>
-                  <li>• Ability to keep good records</li>
-                  <li>• Zimbabwean ID or valid work permit</li>
-               </ul>
-            </div>
+    <div className="h-screen bg-white dark:bg-slate-950 flex flex-col font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+      <Header />
+      
+      <div className="flex-1 flex flex-col lg:flex-row pt-16 md:pt-24 h-full overflow-hidden">
+        
+        {/* Left Side: Sticky Image */}
+        <div className="hidden lg:block lg:w-1/2 sticky top-0 h-full bg-slate-900 overflow-hidden border-r border-slate-100 dark:border-slate-800">
+          <img 
+            src={CareerHeroImg} 
+            alt="Work with us" 
+            className="w-full h-full object-cover opacity-90" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+          <div className="absolute bottom-12 left-12 right-12 text-white">
+             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-400 mb-2">Join our node</p>
+             <h3 className="text-5xl font-black uppercase tracking-tighter leading-none">Join our <br /> <span className="text-blue-500">team</span></h3>
           </div>
         </div>
 
-        {/* Form Side */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[3rem] p-8 md:p-12 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your Full Name</label>
-                <input 
-                  required
-                  type="text"
-                  placeholder="e.g. John Sibanda"
-                  className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-brandNavy/5 transition-all"
-                  value={formData.fullName}
-                  onChange={e => setFormData({...formData, fullName: e.target.value})}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
-                  <input 
-                    required
-                    type="email"
-                    placeholder="name@email.com"
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-brandNavy/5 transition-all"
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Number</label>
-                  <input 
-                    required
-                    type="tel"
-                    placeholder="+263..."
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-brandNavy/5 transition-all"
-                    value={formData.phone}
-                    onChange={e => setFormData({...formData, phone: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Job Title</label>
-                <select 
-                  className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold outline-none cursor-pointer"
-                  value={formData.position}
-                  onChange={e => setFormData({...formData, position: e.target.value})}
-                >
-                  <option>Behavioral Therapist</option>
-                  <option>Junior Teacher</option>
-                  <option>Office Assistant</option>
-                  <option>School Nurse</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Message to School</label>
-                <textarea 
-                  required
-                  rows={4}
-                  placeholder="Tell us why you want to work at Motion Max..."
-                  className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-brandNavy/5 transition-all resize-none"
-                  value={formData.coverLetter}
-                  onChange={e => setFormData({...formData, coverLetter: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Upload your CV (PDF or Word)</label>
-                <div className="relative group">
-                   <input 
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                   />
-                   <div className="w-full px-6 py-8 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center group-hover:border-brandNavy transition-all">
-                      <Upload size={32} className="text-slate-400 mb-2 group-hover:text-brandNavy transition-colors" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                        {formData.cvName || 'Click to select or drag your CV here'}
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">File must be smaller than 2MB</p>
-                   </div>
-                </div>
-              </div>
-            </div>
-
+        {/* Right Side: Simple Application Form (Scrollable) */}
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950 custom-scrollbar">
+          <div className="max-w-xl w-full mx-auto px-6 py-12 lg:py-16 lg:px-12 relative">
+            
             <button 
-              type="submit"
-              disabled={loading}
-              className="w-full py-5 bg-brandNavy text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl flex items-center justify-center gap-4 hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+              onClick={() => setView('landing')}
+              className="mb-10 group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black dark:hover:text-white transition-all self-start"
             >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <>Send Application <Send size={16} /></>}
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              <span>Back to home</span>
             </button>
-          </form>
+
+            <header className="mb-14">
+               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white leading-none mb-4">Job Application <span className="text-blue-600">form</span></h1>
+               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
+                 Do you want to work with us? Tell us about yourself below.
+               </p>
+            </header>
+
+            <form onSubmit={handleSubmit} className="space-y-12 pb-20">
+              {/* Section 01: About You */}
+              <div className="space-y-10">
+                 <div className="flex items-center gap-4">
+                    <span className="w-10 h-10 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">01</span>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-black dark:text-white">Your Details</h3>
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Your Full Name</label>
+                       <input 
+                         required 
+                         type="text" 
+                         placeholder="Enter your name"
+                         className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
+                         value={formData.fullName}
+                         onChange={e => setFormData({...formData, fullName: e.target.value})}
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Email Address</label>
+                          <input 
+                            required 
+                            type="email" 
+                            placeholder="Email address"
+                            className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
+                            value={formData.email}
+                            onChange={e => setFormData({...formData, email: e.target.value})}
+                          />
+                       </div>
+                       <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Phone Number</label>
+                          <input 
+                            required 
+                            type="tel" 
+                            placeholder="Phone number"
+                            className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
+                            value={formData.phone}
+                            onChange={e => setFormData({...formData, phone: e.target.value})}
+                          />
+                       </div>
+                    </div>
+
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">What job are you looking for?</label>
+                       <div className="relative">
+                          <select 
+                            required 
+                            className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white appearance-none transition-all cursor-pointer shadow-sm"
+                            value={formData.position}
+                            onChange={e => setFormData({...formData, position: e.target.value})}
+                          >
+                             <option>Behavioral Therapist</option>
+                             <option>Junior Teacher</option>
+                             <option>Office Assistant</option>
+                             <option>School Nurse</option>
+                             <option>Internship</option>
+                          </select>
+                          <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Section 02: CV and Bio */}
+              <div className="space-y-10">
+                 <div className="flex items-center gap-4">
+                    <span className="w-10 h-10 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">02</span>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-black dark:text-white">Your Background</h3>
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Tell us about yourself</label>
+                       <textarea 
+                         required 
+                         rows={4}
+                         placeholder="Why do you want to work here?"
+                         className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white resize-none transition-all shadow-sm"
+                         value={formData.coverLetter}
+                         onChange={e => setFormData({...formData, coverLetter: e.target.value})}
+                       />
+                    </div>
+
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Upload your CV (Resume)</label>
+                       <div className="relative group">
+                          <input 
+                            type="file" 
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className="w-full px-6 py-12 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-none flex flex-col items-center justify-center text-center group-hover:border-blue-500 transition-all shadow-sm">
+                             <Upload size={32} className="text-slate-400 mb-4 group-hover:text-blue-500 transition-colors" />
+                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">
+                               {formData.cvName || 'Click here to upload your file'}
+                             </p>
+                             <p className="text-[8px] font-bold text-slate-400 mt-2 uppercase tracking-widest">PDF or DOC works best (Max 2MB)</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="pt-8">
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full py-6 bg-black dark:bg-blue-600 text-white rounded-none font-black uppercase tracking-[0.4em] text-xs shadow-2xl flex items-center justify-center gap-4 hover:bg-googleBlue transition-all active:scale-95 disabled:opacity-50 group"
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-3">
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       <span>Sending...</span>
+                    </div>
+                  ) : (
+                    <>Send My Application <Send size={18} className="group-hover:translate-x-2 transition-transform" /></>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>

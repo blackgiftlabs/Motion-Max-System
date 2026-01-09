@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { Menu, X, Sun, Moon, ShoppingCart, ChevronRight } from 'lucide-react';
+import { Menu, X, Sun, Moon, ShoppingCart, ChevronRight, GraduationCap, Briefcase, FileText } from 'lucide-react';
 
 const LogoImg = "https://i.ibb.co/1ftNnHrx/motionmaxlgo6.png";
 
 export const Header: React.FC = () => {
   const { setView, theme, toggleTheme, view, cart } = useStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAppModal, setShowAppModal] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
 
@@ -55,13 +56,15 @@ export const Header: React.FC = () => {
     { label: 'Home', id: 'home', href: 'home', type: 'scroll' },
     { label: 'Services', id: 'services', href: 'services', type: 'scroll' },
     { label: 'Uniforms', id: 'shop', href: 'shop', type: 'view' },
-    { label: 'Careers', id: 'careers', href: 'careers', type: 'view' },
+    { label: 'Applications', id: 'applications_trigger', href: '#', type: 'modal' },
     { label: 'About Us', id: 'story', href: 'story', type: 'scroll' },
     { label: 'Contact', id: 'contact', href: 'contact', type: 'scroll' },
   ];
 
   const handleNavClick = (link: any) => {
-    if (link.type === 'view') {
+    if (link.type === 'modal') {
+      setShowAppModal(true);
+    } else if (link.type === 'view') {
       setView(link.id);
     } else {
       if (view !== 'landing') {
@@ -165,6 +168,58 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Applications Modal Selection */}
+      {showAppModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowAppModal(false)}></div>
+           <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-none shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
+              <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-600 rounded-none text-white shadow-lg">
+                       <FileText size={20} />
+                    </div>
+                    <h3 className="text-xl font-black uppercase tracking-tight dark:text-white">Submission Portal</h3>
+                 </div>
+                 <button onClick={() => setShowAppModal(false)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors">
+                    <X size={24} />
+                 </button>
+              </header>
+
+              <div className="p-8 grid sm:grid-cols-2 gap-6">
+                 <button 
+                  onClick={() => { setView('apply'); setShowAppModal(false); }}
+                  className="p-10 border-2 border-slate-100 dark:border-slate-800 hover:border-blue-600 dark:hover:border-blue-500 bg-slate-50 dark:bg-slate-950/50 flex flex-col items-center text-center gap-6 group transition-all"
+                 >
+                    <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-none shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform border border-slate-100 dark:border-slate-800">
+                       <GraduationCap size={32} className="text-blue-600" />
+                    </div>
+                    <div>
+                       <h4 className="font-black uppercase tracking-widest text-sm mb-2 dark:text-white">Student Enrollment</h4>
+                       <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Register your child</p>
+                    </div>
+                 </button>
+
+                 <button 
+                  onClick={() => { setView('careers'); setShowAppModal(false); }}
+                  className="p-10 border-2 border-slate-100 dark:border-slate-800 hover:border-blue-600 dark:hover:border-blue-500 bg-slate-50 dark:bg-slate-950/50 flex flex-col items-center text-center gap-6 group transition-all"
+                 >
+                    <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-none shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform border border-slate-100 dark:border-slate-800">
+                       <Briefcase size={32} className="text-blue-600" />
+                    </div>
+                    <div>
+                       <h4 className="font-black uppercase tracking-widest text-sm mb-2 dark:text-white">Job Vacancy</h4>
+                       <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Join our team</p>
+                    </div>
+                 </button>
+              </div>
+
+              <footer className="p-6 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 text-center">
+                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Select an application node to continue</p>
+              </footer>
+           </div>
+        </div>
+      )}
 
       {/* Mobile Menu - Enhanced Experience */}
       {isMobileMenuOpen && (

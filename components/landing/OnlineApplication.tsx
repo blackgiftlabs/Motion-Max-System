@@ -8,7 +8,8 @@ import {
   Calendar, 
   CheckCircle2, 
   ArrowRight,
-  ChevronDown
+  ChevronDown,
+  ArrowLeft
 } from 'lucide-react';
 
 const IllustrationImg = "https://i.ibb.co/Lb8Lzqs/college-student-read-a-book-illustration.jpg";
@@ -36,7 +37,6 @@ export const OnlineApplication: React.FC = () => {
     try {
       await submitStudentApplication(formData);
       setIsSuccess(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       notify('error', 'Something went wrong. Please try again.');
     } finally {
@@ -46,7 +46,7 @@ export const OnlineApplication: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
+      <div className="h-screen bg-white dark:bg-slate-950 flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700">
           <div className="max-w-xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-12 text-center space-y-8 shadow-2xl relative overflow-hidden">
@@ -73,40 +73,52 @@ export const OnlineApplication: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="h-screen bg-white dark:bg-slate-950 flex flex-col font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900">
       <Header />
       
-      <div className="flex-1 flex flex-col lg:flex-row pt-16 md:pt-24">
-        {/* Left Side: Sticky Illustration */}
-        <div className="hidden lg:block lg:w-1/2 h-[calc(100vh-96px)] sticky top-24 bg-white dark:bg-slate-950 overflow-hidden">
+      {/* Sticky-Scrolling Model Container */}
+      <div className="flex-1 flex flex-col lg:flex-row pt-16 md:pt-24 h-full overflow-hidden">
+        
+        {/* Left Side: Sticky Illustration (Hidden on mobile for better flow) */}
+        <div className="hidden lg:block lg:w-1/2 sticky top-0 h-full bg-white dark:bg-slate-950 overflow-hidden border-r border-slate-100 dark:border-slate-800">
           <img 
             src={IllustrationImg} 
             alt="Student Reading" 
-            className="w-full h-full object-cover transition-all duration-1000" 
+            className="w-full h-full object-cover" 
           />
         </div>
 
         {/* Right Side: Scrollable Application Form */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
-          <div className="max-w-xl w-full mx-auto px-6 py-12 lg:py-8 lg:px-10">
-            <header className="mb-12">
-               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white leading-none mb-4">Application <span className="text-blue-600">form</span></h1>
-               <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                 Begin your child’s progress with Zimbabwe’s leading behavioral therapy center. Please complete the form below to start.
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950 custom-scrollbar">
+          <div className="max-w-xl w-full mx-auto px-6 py-12 lg:py-16 lg:px-12 relative">
+            
+            {/* Back Button */}
+            <button 
+              onClick={() => setView('landing')}
+              className="mb-10 group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black dark:hover:text-white transition-all"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              <span>Back to home</span>
+            </button>
+
+            <header className="mb-14">
+               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white leading-none mb-4">Student Application <span className="text-blue-600">form</span></h1>
+               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
+                 Start your child's journey with us. Fill in the form below to apply.
                </p>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-10 pb-20">
+            <form onSubmit={handleSubmit} className="space-y-12 pb-20">
               {/* Section 01: Student Details */}
-              <div className="space-y-8">
+              <div className="space-y-10">
                  <div className="flex items-center gap-4">
-                    <span className="w-8 h-8 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">01</span>
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-black dark:text-white">Student Details</h3>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+                    <span className="w-10 h-10 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">01</span>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-black dark:text-white">Student Details</h3>
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
                        <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">First Name</label>
                        <div className="relative">
                           <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -114,13 +126,13 @@ export const OnlineApplication: React.FC = () => {
                             required 
                             type="text" 
                             placeholder="Student's first name"
-                            className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
                             value={formData.firstName}
                             onChange={e => setFormData({...formData, firstName: e.target.value})}
                           />
                        </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                        <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Surname</label>
                        <div className="relative">
                           <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -128,7 +140,7 @@ export const OnlineApplication: React.FC = () => {
                             required 
                             type="text" 
                             placeholder="Student's surname"
-                            className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
                             value={formData.lastName}
                             onChange={e => setFormData({...formData, lastName: e.target.value})}
                           />
@@ -136,26 +148,26 @@ export const OnlineApplication: React.FC = () => {
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
                        <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Date of Birth</label>
                        <div className="relative">
                           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <input 
                             required 
                             type="date" 
-                            className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
                             value={formData.dob}
                             onChange={e => setFormData({...formData, dob: e.target.value})}
                           />
                        </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                        <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Gender</label>
                        <div className="relative">
                           <select 
                             required 
-                            className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white appearance-none transition-all cursor-pointer"
+                            className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white appearance-none transition-all cursor-pointer shadow-sm"
                             value={formData.gender}
                             onChange={e => setFormData({...formData, gender: e.target.value as 'Male' | 'Female'})}
                           >
@@ -167,7 +179,7 @@ export const OnlineApplication: React.FC = () => {
                     </div>
                  </div>
 
-                 <div className="space-y-2">
+                 <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Home Address</label>
                     <div className="relative">
                        <MapPin className="absolute left-4 top-5 text-slate-400" size={18} />
@@ -175,7 +187,7 @@ export const OnlineApplication: React.FC = () => {
                          required 
                          rows={3}
                          placeholder="Residential address in Harare"
-                         className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white resize-none transition-all"
+                         className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white resize-none transition-all shadow-sm"
                          value={formData.address}
                          onChange={e => setFormData({...formData, address: e.target.value})}
                        />
@@ -184,29 +196,29 @@ export const OnlineApplication: React.FC = () => {
               </div>
 
               {/* Section 02: Guardian Details */}
-              <div className="space-y-8">
+              <div className="space-y-10">
                  <div className="flex items-center gap-4">
-                    <span className="w-8 h-8 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">02</span>
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-black dark:text-white">Guardian Details</h3>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+                    <span className="w-10 h-10 bg-black dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black">02</span>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-black dark:text-white">Guardian Details</h3>
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">WhatsApp Phone Number</label>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">WhatsApp Number</label>
                        <div className="relative">
                           <img src={WhatsAppIcon} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" alt="WhatsApp" />
                           <input 
                             required 
                             type="tel" 
                             placeholder="+263..."
-                            className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
                             value={formData.guardianPhone}
                             onChange={e => setFormData({...formData, guardianPhone: e.target.value})}
                           />
                        </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                        <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Email Address</label>
                        <div className="relative">
                           <img src={EmailIcon} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" alt="Email" />
@@ -214,7 +226,7 @@ export const OnlineApplication: React.FC = () => {
                             required 
                             type="email" 
                             placeholder="guardian@example.com"
-                            className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus:border-blue-500 rounded-none text-sm font-bold outline-none dark:text-white transition-all shadow-sm"
                             value={formData.guardianEmail}
                             onChange={e => setFormData({...formData, guardianEmail: e.target.value})}
                           />
@@ -223,7 +235,7 @@ export const OnlineApplication: React.FC = () => {
                  </div>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-8">
                 <button 
                   type="submit" 
                   disabled={isSubmitting}

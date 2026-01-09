@@ -17,9 +17,9 @@ export const SystemLogs: React.FC = () => {
     });
   }, [systemLogs, searchTerm, filterAction]);
 
-  // Fix: Explicitly type uniqueActions as string[] to avoid 'unknown' type errors in .map()
+  // Fix: Explicitly type the Set as Set<string> to ensure correct array inference
   const uniqueActions = useMemo<string[]>(() => {
-    const actions = new Set(systemLogs.map(l => l.action));
+    const actions = new Set<string>(systemLogs.map(l => l.action));
     return ['All', ...Array.from(actions)];
   }, [systemLogs]);
 

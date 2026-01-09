@@ -21,6 +21,7 @@ import { TransactionsManagement } from './components/TransactionsManagement';
 import { OrderHistory } from './components/OrderHistory';
 import { ReceiptVerification } from './components/student/ReceiptVerification';
 import { OnlineApplication } from './components/landing/OnlineApplication';
+import { CareersPage } from './components/landing/CareersPage';
 import { NoticesSlideOver } from './components/common/NoticesSlideOver';
 import { AdminNotices } from './components/AdminNotices';
 import { SystemLogs } from './components/SystemLogs';
@@ -78,6 +79,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (view === 'verify') return <ReceiptVerification />;
     if (view === 'apply') return <OnlineApplication />;
+    if (view === 'careers') return <CareersPage />;
 
     if (!isLoggedIn) {
       if (view === 'login') {
@@ -151,7 +153,7 @@ const App: React.FC = () => {
     <>
       <NotificationHost />
       <NoticesSlideOver />
-      {isLoggedIn && view !== 'verify' && view !== 'apply' ? (
+      {isLoggedIn && view !== 'verify' && view !== 'apply' && view !== 'careers' ? (
         <AppShell>
           {renderContent()}
         </AppShell>
