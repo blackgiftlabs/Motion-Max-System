@@ -61,7 +61,11 @@ export const AdminClinicalLogs: React.FC = () => {
     autoTable(doc, {
       startY: 30,
       head: [['Step', 'Description', 'Outcome']],
-      body: activeLog.steps.map((s, i) => [(i+1).toString(), s.description, s.promptLevel === '+' ? 'Achieved' : 'Support']),
+      body: activeLog.steps.map((s, i) => [
+        (i+1).toString(), 
+        s.description, 
+        s.trials.includes('+') ? 'Achieved' : 'Support'
+      ]),
     });
     doc.save(`Report_${selectedStudent.id}.pdf`);
     setIsExporting(false);
@@ -129,17 +133,20 @@ export const AdminClinicalLogs: React.FC = () => {
                    </button>
                 </div>
                 <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4">
-                   {activeLog.steps.map((step, idx) => (
-                     <div key={step.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 group hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                           <span className="font-mono text-[10px] font-bold text-slate-300">{(idx + 1).toString().padStart(2, '0')}</span>
-                           <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{step.description}</p>
-                        </div>
-                        <span className={`px-2 py-0.5 border text-[8px] font-black uppercase ${step.promptLevel === '+' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                           {step.promptLevel === '+' ? 'Achieved' : 'Help Given'}
-                        </span>
-                     </div>
-                   ))}
+                   {activeLog.steps.map((step, idx) => {
+                     const isAchieved = step.trials.includes('+');
+                     return (
+                       <div key={step.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 group hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                             <span className="font-mono text-[10px] font-bold text-slate-300">{(idx + 1).toString().padStart(2, '0')}</span>
+                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{step.description}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 border text-[8px] font-black uppercase ${isAchieved ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                             {isAchieved ? 'Achieved' : 'Help Given'}
+                          </span>
+                       </div>
+                     );
+                   })}
                 </div>
              </div>
            ) : (
