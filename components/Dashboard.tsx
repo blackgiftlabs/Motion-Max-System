@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
@@ -60,7 +61,6 @@ export const Dashboard: React.FC = () => {
       d.setDate(now.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       
-      // Count actual logs for this date
       const count = (clinicalLogs || []).filter(log => log.date.startsWith(dateStr)).length;
       
       data.push({
@@ -100,49 +100,45 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-up max-w-[1600px] mx-auto pb-20">
-      {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">System Entry Point</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">School Overview</span>
           </div>
-          <h1 className="text-4xl font-black text-ghText dark:text-white uppercase tracking-tighter leading-none">Management Center</h1>
-          <p className="text-sm text-slate-500 mt-3 font-medium italic">Terminal active for {user?.name}. Global metrics are stable.</p>
+          <h1 className="text-4xl font-black text-ghText dark:text-white uppercase tracking-tighter leading-none">Home Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-3 font-medium italic">Welcome back, {user?.name}. Everything is running smoothly today.</p>
         </div>
         <div className="flex items-center gap-2 text-xs font-mono bg-ghBg dark:bg-slate-900 border border-ghBorder dark:border-slate-800 px-4 py-2 rounded-xl text-slate-500 shadow-sm">
           <Clock size={14} className="text-googleBlue" /> {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       </header>
 
-      {/* 1. Quick Command Terminal */}
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
            <Zap size={14} className="text-amber-500 fill-amber-500" />
-           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Quick Commands</h2>
+           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Quick Links</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           <ActionCard label="Add Student" icon={UserPlus} color="bg-blue-600" onClick={() => setActiveTab('students')} />
-          <ActionCard label="Hire Staff" icon={Users} color="bg-emerald-600" onClick={() => setActiveTab('staff')} />
-          <ActionCard label="Clinical" icon={HeartPulse} color="bg-rose-600" onClick={() => setActiveTab('clinical')} />
+          <ActionCard label="Add Staff" icon={Users} color="bg-emerald-600" onClick={() => setActiveTab('staff')} />
+          <ActionCard label="Checklist" icon={HeartPulse} color="bg-rose-600" onClick={() => setActiveTab('clinical')} />
           <ActionCard label="Announce" icon={BellRing} color="bg-indigo-600" onClick={() => setActiveTab('notices')} />
           <ActionCard label="Orders" icon={Receipt} color="bg-orange-600" onClick={() => setActiveTab('orders')} />
-          <ActionCard label="Shop" icon={ShoppingCart} color="bg-purple-600" onClick={() => setActiveTab('shop')} />
-          <ActionCard label="Audits" icon={ShieldAlert} color="bg-slate-700" onClick={() => setActiveTab('system-logs')} />
+          <ActionCard label="Uniforms" icon={ShoppingCart} color="bg-purple-600" onClick={() => setActiveTab('shop')} />
+          <ActionCard label="Logs" icon={ShieldAlert} color="bg-slate-700" onClick={() => setActiveTab('system-logs')} />
           <ActionCard label="Settings" icon={Settings} color="bg-blue-500" onClick={() => setActiveTab('settings')} />
         </div>
       </section>
 
-      {/* 2. KPIs Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatBox title="Enrolled Students" value={students.length} change="12%" icon={Users} color="text-googleBlue" />
         <StatBox title="Session Notes" value={clinicalLogs.length} change="8%" icon={Activity} color="text-indigo-600" />
         <StatBox title="Active Staff" value={staff.length} change="2%" icon={ShieldAlert} color="text-emerald-600" />
-        <StatBox title="Stock Value" value={`$${(orders.length * 125).toLocaleString()}`} change="5%" icon={Package} color="text-orange-600" />
+        <StatBox title="Procurement" value={`$${(orders.length * 125).toLocaleString()}`} change="5%" icon={Package} color="text-orange-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 3. Main Progress Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
           <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -150,7 +146,6 @@ export const Dashboard: React.FC = () => {
               <h3 className="text-sm font-black uppercase tracking-widest text-ghText dark:text-white">Activity Growth</h3>
             </div>
             
-            {/* Range Selector - GitHub Style Segmented Control */}
             <div className="flex items-center bg-ghBg dark:bg-slate-800 p-1 rounded-xl border border-ghBorder dark:border-slate-700">
                <button 
                 onClick={() => setChartRange('7d')}
@@ -197,17 +192,16 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. Notification Panel */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 flex flex-col shadow-sm rounded-[2.5rem] overflow-hidden">
             <div className="p-6 border-b border-ghBorder dark:border-slate-800 bg-ghBg/50 dark:bg-slate-950/50">
-              <h3 className="text-sm font-black uppercase tracking-widest dark:text-white">System Feed</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest dark:text-white">Recent Updates</h3>
             </div>
             <div className="p-4 space-y-3">
               {[
-                { label: 'New Careers', value: applications.filter(a => a.status === 'Pending').length, icon: Send, color: 'text-amber-500', tab: 'applications' },
-                { label: 'Pending Orders', value: orders.filter(o => o.status === 'Uncollected').length, icon: Receipt, color: 'text-blue-500', tab: 'orders' },
-                { label: 'Notice Board', value: notices.length, icon: BellRing, color: 'text-emerald-500', tab: 'notices' },
+                { label: 'Careers', value: applications.filter(a => a.status === 'Pending').length, icon: Send, color: 'text-amber-500', tab: 'applications' },
+                { label: 'Unpaid Orders', value: orders.filter(o => o.status === 'Uncollected').length, icon: Receipt, color: 'text-blue-500', tab: 'orders' },
+                { label: 'Notices', value: notices.length, icon: BellRing, color: 'text-emerald-500', tab: 'notices' },
                 { label: 'System Errors', value: 0, icon: ShieldAlert, color: 'text-rose-500', tab: 'system-logs' },
               ].map((log, i) => (
                 <button 
@@ -232,19 +226,18 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Student Intelligence Ledger Table */}
       <section className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
           <div className="flex items-center gap-3">
              <Target size={18} className="text-googleBlue" />
-             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Intelligence Ledger</h2>
+             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Student List</h2>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative group">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-googleBlue" />
               <input 
                 type="text" 
-                placeholder="Filter ID or Name..." 
+                placeholder="Filter names..." 
                 value={tableSearch}
                 onChange={e => setTableSearch(e.target.value)}
                 className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-googleBlue transition-all w-full sm:w-64"
@@ -269,12 +262,12 @@ export const Dashboard: React.FC = () => {
               <table className="w-full text-left">
                  <thead className="bg-ghBg/50 dark:bg-slate-950/50 border-b border-ghBorder dark:border-slate-800 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <tr>
-                       <th className="px-8 py-5">System ID / Student</th>
-                       <th className="px-8 py-5">Assigned Class</th>
-                       <th className="px-8 py-5 text-center">Milestone Growth</th>
-                       <th className="px-8 py-5">Fees Paid</th>
-                       <th className="px-8 py-5">Outstanding</th>
-                       <th className="px-8 py-5 text-right">System Entry</th>
+                       <th className="px-8 py-5">Student Photo & Name</th>
+                       <th className="px-8 py-5">Class</th>
+                       <th className="px-8 py-5 text-center">Progress</th>
+                       <th className="px-8 py-5">Paid</th>
+                       <th className="px-8 py-5">Balance</th>
+                       <th className="px-8 py-5 text-right">View</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -289,8 +282,8 @@ export const Dashboard: React.FC = () => {
                       <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-blue-900/5 group transition-colors cursor-pointer" onClick={() => setActiveTab('students')}>
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-googleBlue flex items-center justify-center font-black text-xs uppercase shadow-sm">
-                                  {student.fullName[0]}
+                               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center font-black text-xs uppercase text-blue-600">
+                                  {student.imageUrl ? <img src={student.imageUrl} className="w-full h-full object-cover" alt={student.fullName} /> : student.fullName[0]}
                                </div>
                                <div>
                                   <p className="text-[11px] font-black uppercase tracking-tight text-slate-950 dark:text-white leading-none">{student.fullName}</p>
@@ -335,9 +328,9 @@ export const Dashboard: React.FC = () => {
            <div className="p-8 bg-ghBg/30 dark:bg-slate-950/30 border-t border-ghBorder dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3 text-slate-400">
                  <ShieldCheck size={16} className="text-emerald-500" />
-                 <span className="text-[9px] font-black uppercase tracking-widest">Verified Database Sync</span>
+                 <span className="text-[9px] font-black uppercase tracking-widest">Secure Records Sync</span>
               </div>
-              <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredStudents.length} Active Records Tracked</p>
+              <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredStudents.length} Active Student Profiles</p>
            </div>
         </div>
       </section>

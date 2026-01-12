@@ -218,12 +218,6 @@ export const AdminNotices: React.FC = () => {
                 </div>
               </button>
             </div>
-            
-            <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
-               <p className="text-[10px] text-slate-400 font-medium italic leading-relaxed">
-                 "Drafts use live system data to instantly create important messages for parents and staff."
-               </p>
-            </div>
           </div>
         </div>
       </div>
@@ -257,7 +251,7 @@ export const AdminNotices: React.FC = () => {
                        <th className="px-8 py-5">Subject / content</th>
                        <th className="px-8 py-5">Audience</th>
                        <th className="px-8 py-5">Category</th>
-                       <th className="px-8 py-5 text-center">Activity</th>
+                       <th className="px-8 py-5 text-center">Replies</th>
                        <th className="px-8 py-5 text-right">Logged Date</th>
                     </tr>
                  </thead>

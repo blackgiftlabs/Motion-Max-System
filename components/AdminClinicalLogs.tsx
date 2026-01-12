@@ -67,29 +67,32 @@ export const AdminClinicalLogs: React.FC = () => {
     setIsExporting(false);
   };
 
-  if (!selectedStudent) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-slate-400">Loading Registry...</div>;
+  if (!selectedStudent) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-slate-400">Loading Records...</div>;
 
   return (
     <div className="space-y-1 animate-in fade-in duration-500 pb-10 selection:bg-blue-100">
       
-      {/* Header */}
       <header className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-none flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-blue-600 text-white">
             <HeartPulse size={20} />
           </div>
-          <div>
-            <h1 className="text-lg font-black uppercase text-slate-900 dark:text-white leading-none tracking-tight">Progress Archives</h1>
-            <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest italic">{selectedStudent.fullName} // Reports logged</p>
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 rounded-none overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200">
+                {selectedStudent.imageUrl ? <img src={selectedStudent.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-blue-600">{selectedStudent.fullName[0]}</div>}
+             </div>
+             <div>
+               <h1 className="text-lg font-black uppercase text-slate-900 dark:text-white leading-none tracking-tight">Report History</h1>
+               <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest italic">{selectedStudent.fullName} // Records</p>
+             </div>
           </div>
         </div>
       </header>
 
-      {/* Reports List - Sharp & High Contrast */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
         <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 space-y-1 h-fit">
            <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-[0.3em] mb-4 flex items-center gap-2 px-2">
-              <Calendar size={12} /> Registry Timeline
+              <Calendar size={12} /> List of Reports
            </h3>
            <div className="space-y-1 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
               {studentLogs.length === 0 ? (
@@ -113,13 +116,12 @@ export const AdminClinicalLogs: React.FC = () => {
            </div>
         </div>
 
-        {/* Active Log Detail */}
         <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none overflow-hidden min-h-[500px]">
            {activeLog ? (
              <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50">
                    <div>
-                      <span className="text-[8px] font-black uppercase text-blue-600 tracking-widest">Focus node</span>
+                      <span className="text-[8px] font-black uppercase text-blue-600 tracking-widest">Target Skill</span>
                       <h4 className="text-xl font-black uppercase text-slate-900 dark:text-white tracking-tight leading-none mt-1">{activeLog.targetBehavior}</h4>
                    </div>
                    <button onClick={handleExportPDF} disabled={isExporting} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-blue-600 transition-all">
@@ -134,7 +136,7 @@ export const AdminClinicalLogs: React.FC = () => {
                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{step.description}</p>
                         </div>
                         <span className={`px-2 py-0.5 border text-[8px] font-black uppercase ${step.promptLevel === '+' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                           {step.promptLevel === '+' ? 'Achieved' : `Level ${step.promptLevel}`}
+                           {step.promptLevel === '+' ? 'Achieved' : 'Help Given'}
                         </span>
                      </div>
                    ))}
@@ -143,7 +145,7 @@ export const AdminClinicalLogs: React.FC = () => {
            ) : (
              <div className="h-full flex flex-col items-center justify-center text-center p-20 opacity-20">
                 <Brain size={64} className="mb-4 text-slate-400" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Select report record from the timeline</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Select a report from the list</p>
              </div>
            )}
         </div>

@@ -23,6 +23,7 @@ export interface Student {
   parentEmail: string;
   homeAddress: string;
   diagnosis: string;
+  diagnosisPdf?: string; // Base64 or URL for the PDF file
   medicalRecords: string;
   socialHistory: string;
   targetBehaviors: string;
@@ -56,6 +57,12 @@ export interface NoticeReply {
   timestamp: string;
 }
 
+export interface NoticeView {
+  userId: string;
+  userName: string;
+  timestamp: string;
+}
+
 export type NoticeTarget = 'PARENT' | 'SPECIALIST' | 'ADMIN_SUPPORT' | 'ALL';
 export type NoticeType = 'General' | 'Fees' | 'Meeting';
 
@@ -69,6 +76,7 @@ export interface Notice {
   authorName: string;
   timestamp: string;
   replies: NoticeReply[];
+  views: NoticeView[];
 }
 
 export interface PaymentRecord {
@@ -131,6 +139,7 @@ export interface Staff {
   phone: string;
   role: Role;
   assignedClasses: string[];
+  imageUrl?: string;
 }
 
 export interface Application {
@@ -166,11 +175,18 @@ export interface Order {
   timestamp: string;
 }
 
+export interface PositionEntry {
+  name: string;
+  active: boolean;
+}
+
 export interface SystemSettings {
-  positions: string[];
+  positions: PositionEntry[];
   classes: string[];
   feesAmount: number;
   currentTerm: string;
+  nextTermStartDate?: string; // New: When the next term starts
+  defaultTaskSteps?: string[]; // New: Template steps for task analysis
 }
 
 export type PromptLevel = '+' | 'FP' | 'PP' | 'DV' | 'IDV' | 'GP' | 'VP' | '-';
@@ -178,7 +194,15 @@ export type PromptLevel = '+' | 'FP' | 'PP' | 'DV' | 'IDV' | 'GP' | 'VP' | '-';
 export interface TaskStep {
   id: string;
   description: string;
-  promptLevel: PromptLevel;
+  trials: PromptLevel[]; 
+}
+
+export interface ProgramRequest {
+  id: string;
+  activity: string;
+  echoicTempted: number;
+  noVerbalTempted: number;
+  noEchoicNoTempting: number;
 }
 
 export interface SessionLog {
@@ -189,7 +213,10 @@ export interface SessionLog {
   targetBehavior: string;
   method: 'Forward Chaining' | 'Backward Chaining' | 'Total Task';
   steps: TaskStep[];
+  programRequests?: ProgramRequest[];
   independenceScore: number;
+  goalPerHour?: number;
+  actualHour?: number;
 }
 
 export interface ShopItem {

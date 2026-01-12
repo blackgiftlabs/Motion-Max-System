@@ -25,7 +25,8 @@ import {
   updateDoc,
   deleteDoc,
   limit,
-  arrayUnion
+  arrayUnion,
+  where
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -44,6 +45,13 @@ const db = getFirestore(app);
 const secondaryApp = getApps().length > 1 ? getApp("Secondary") : initializeApp(firebaseConfig, "Secondary");
 const secondaryAuth = getAuth(secondaryApp);
 
+// Helper to extract image URL from HTML snippets
+const extractSrcFromHtml = (input: string) => {
+  if (!input) return '';
+  const match = input.match(/src="([^"]+)"/);
+  return match ? match[1] : input.trim();
+};
+
 type View = 'landing' | 'login' | 'app' | 'careers' | 'shop' | 'verify' | 'apply' | 'tour';
 
 export interface AppNotification {
@@ -60,8 +68,8 @@ interface CartItem extends ShopItem {
 export interface MilestoneTemplate {
   id: string;
   label: string;
-  minAge: number; // in months
-  maxAge: number; // in months
+  minAge: number; 
+  maxAge: number; 
   sections: {
     title: string;
     items: string[];
@@ -133,6 +141,7 @@ interface AppState {
   addPayment: (payment: Omit<PaymentRecord, 'id' | 'qrCodeUrl' | 'verificationHash'>) => Promise<void>;
   addNotice: (title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<void>;
   replyToNotice: (noticeId: string, message: string) => Promise<void>;
+  markNoticeAsViewed: (noticeId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => {
@@ -143,7 +152,6 @@ export const useStore = create<AppState>((set, get) => {
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
           set({ user: userData, isLoggedIn: true, view: 'app', activeTab: 'dashboard' });
-          get().addSystemLog('Login', `User ${userData.name} logged in.`);
         }
       } catch (err) {
         console.error("Auth sync error:", err);
@@ -176,7 +184,7 @@ export const useStore = create<AppState>((set, get) => {
       setTimeout(() => get().removeNotification(id), duration);
     },
     removeNotification: (id) => set(state => ({ notifications: state.notifications.filter(n => n.id !== id) })),
-    settings: { positions: ['Teacher', 'Assistant', 'Admin'], classes: [], feesAmount: 500, currentTerm: 'Term 1' },
+    settings: { positions: [], classes: [], feesAmount: 500, currentTerm: 'Term 1' },
     selectedStudentIdForLog: null,
     setSelectedStudentIdForLog: (id) => set({ selectedStudentIdForLog: id }),
     students: [],
@@ -200,22 +208,15 @@ export const useStore = create<AppState>((set, get) => {
         const fbUser = userCredential.user;
         const userDocRef = doc(db, 'users', fbUser.uid);
         let userDoc = await getDoc(userDocRef);
-        if (!userDoc.exists() && email === 'admin@gmail.com') {
-          const profile: User = { id: fbUser.uid, name: 'Admin', email: email, role: 'SUPER_ADMIN', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=Admin` };
-          await setDoc(userDocRef, profile);
-          userDoc = await getDoc(userDocRef);
-        }
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
           if (userData.role !== role) { await signOut(auth); throw new Error('ROLE_MISMATCH'); }
           set({ user: userData, isLoggedIn: true, view: 'app', activeTab: 'dashboard' });
-          get().notify('success', 'Logged in successfully.');
+          get().notify('success', 'Welcome back!');
         } else { await signOut(auth); throw new Error('PROFILE_NOT_FOUND'); }
       } catch (error: any) { throw error; }
     },
     logout: async () => {
-      const u = get().user;
-      if (u) await get().addSystemLog('Logout', `User ${u.name} logged out.`);
       await signOut(auth);
       set({ isLoggedIn: false, view: 'landing', user: null, isMobileMenuOpen: false, cart: [] });
       get().notify('info', 'Logged out.');
@@ -268,13 +269,20 @@ export const useStore = create<AppState>((set, get) => {
     },
     updateSettings: async (newSettings) => {
       try {
+        const oldSettings = get().settings;
         const settingsRef = doc(db, 'settings', 'global');
-        await setDoc(settingsRef, { ...get().settings, ...newSettings }, { merge: true });
-        get().notify('success', 'Settings saved.');
-        get().addSystemLog('Update', `System settings updated.`);
-      } catch (err) {
-        get().notify('error', 'Update failed.');
-      }
+        await setDoc(settingsRef, { ...oldSettings, ...newSettings }, { merge: true });
+
+        // Automated notice for next term start
+        if (newSettings.nextTermStartDate && newSettings.nextTermStartDate !== oldSettings.nextTermStartDate) {
+          await get().addNotice(
+            "Upcoming Term Schedule", 
+            `Official announcement: The next school term is scheduled to begin on ${new Date(newSettings.nextTermStartDate).toLocaleDateString(undefined, { dateStyle: 'full' })}. Please ensure all preparations are complete.`,
+            "General",
+            "ALL"
+          );
+        }
+      } catch (err) { get().notify('error', 'Update failed.'); }
     },
     addStudent: async (studentData) => {
       try {
@@ -284,73 +292,97 @@ export const useStore = create<AppState>((set, get) => {
         const snapshot = await getDocs(q);
         const count = snapshot.size + 1;
         const formattedId = `MM${count.toString().padStart(3, '0')}`;
-        const email = `${studentData.firstName.toLowerCase()}.${studentData.lastName.toLowerCase()}@motionmax.com`;
-        const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, email, "000000");
-        const studentUid = studentUserCredential.user.uid;
-        const finalStudent = { ...studentData, fullName, id: formattedId, firebaseUid: studentUid, totalPaid: 0 };
-        await setDoc(doc(db, 'students', studentUid), finalStudent);
-        await setDoc(doc(db, 'users', studentUid), { id: studentUid, name: fullName, email: email, role: 'STUDENT', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
         
-        const parentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentData.parentEmail, "000000");
-        const parentUid = parentUserCredential.user.uid;
-        const parentRecord: Parent = { id: parentUid, name: studentData.parentName, email: studentData.parentEmail, phone: studentData.parentPhone, address: studentData.homeAddress, studentId: formattedId, studentFullName: fullName, firebaseUid: parentUid };
-        await setDoc(doc(db, 'parents', parentUid), parentRecord);
-        await setDoc(doc(db, 'users', parentUid), { id: parentUid, name: studentData.parentName, email: studentData.parentEmail, role: 'PARENT', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentData.parentName}` });
+        // UNIQUE STUDENT EMAIL
+        const studentEmail = `${formattedId.toLowerCase()}@motionmax.com`;
+        
+        // PARSE IMAGE
+        const finalImageUrl = extractSrcFromHtml(studentData.imageUrl || '');
+        
+        // 1. Student Auth
+        const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentEmail, "000000");
+        const studentUid = studentUserCredential.user.uid;
+        
+        const finalStudent = { ...studentData, imageUrl: finalImageUrl, fullName, id: formattedId, firebaseUid: studentUid, totalPaid: 0 };
+        await setDoc(doc(db, 'students', studentUid), finalStudent);
+        await setDoc(doc(db, 'users', studentUid), { id: studentUid, name: fullName, email: studentEmail, role: 'STUDENT', avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
+        
+        // 2. Parent Account (Handle Siblings)
+        const parentEmail = studentData.parentEmail.toLowerCase().trim();
+        const usersRef = collection(db, 'users');
+        const parentQuery = query(usersRef, where('email', '==', parentEmail));
+        const parentSnapshot = await getDocs(parentQuery);
+
+        if (parentSnapshot.empty) {
+          const parentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, parentEmail, "000000");
+          const parentUid = parentUserCredential.user.uid;
+          const parentRecord: Parent = { id: parentUid, name: studentData.parentName, email: parentEmail, phone: studentData.parentPhone, address: studentData.homeAddress, studentId: formattedId, studentFullName: fullName, firebaseUid: parentUid };
+          await setDoc(doc(db, 'parents', parentUid), parentRecord);
+          await setDoc(doc(db, 'users', parentUid), { id: parentUid, name: studentData.parentName, email: parentEmail, role: 'PARENT', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentData.parentName}` });
+        } else {
+          get().notify('info', `Linked new child to existing parent account.`);
+        }
         
         await signOut(secondaryAuth);
-        get().addSystemLog('Creation', `Added student: ${fullName}.`);
-        get().notify('success', `Student added.`);
-      } catch (err: any) { get().notify('error', err.message); }
+        get().notify('success', `Student registered.`);
+      } catch (err: any) { 
+        await signOut(secondaryAuth);
+        get().notify('error', err.code === 'auth/email-already-in-use' ? 'This email is already in use.' : err.message); 
+      }
     },
     updateStudent: async (uid, data) => {
       try {
-        await updateDoc(doc(db, 'students', uid), data);
-        get().addSystemLog('Update', `Updated info for student ${uid}.`);
-        get().notify('success', 'Information updated.');
+        const processed = { ...data };
+        if (data.imageUrl) processed.imageUrl = extractSrcFromHtml(data.imageUrl);
+        await updateDoc(doc(db, 'students', uid), processed);
+        get().notify('success', 'Profile updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     deleteStudent: async (uid) => {
       try {
-        const studentDoc = await getDoc(doc(db, 'students', uid));
-        if (studentDoc.exists()) {
-          const sData = studentDoc.data() as Student;
-          await deleteDoc(doc(db, 'students', uid));
-          await deleteDoc(doc(db, 'users', uid));
-          get().addSystemLog('Deletion', `Deleted student: ${sData.fullName}.`);
-          get().notify('success', 'Student removed.');
-        }
+        await deleteDoc(doc(db, 'students', uid));
+        await deleteDoc(doc(db, 'users', uid));
+        get().notify('success', 'Student removed.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     addStaff: async (staffData) => {
       try {
         const fullName = `${staffData.firstName} ${staffData.lastName}`;
-        const email = staffData.email;
+        const email = staffData.email.toLowerCase().trim();
+        
+        const usersRef = collection(db, 'users');
+        const emailQuery = query(usersRef, where('email', '==', email));
+        const emailSnapshot = await getDocs(emailQuery);
+        
+        if (!emailSnapshot.empty) {
+          throw new Error('This email is already registered to someone else.');
+        }
+
+        const finalImageUrl = extractSrcFromHtml(staffData.imageUrl || '');
         const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, "000000");
         const staffUid = staffCredential.user.uid;
-        await setDoc(doc(db, 'staff', staffUid), { ...staffData, fullName, id: staffUid, firebaseUid: staffUid });
-        await setDoc(doc(db, 'users', staffUid), { id: staffUid, name: fullName, email: email, role: staffData.role, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
+        await setDoc(doc(db, 'staff', staffUid), { ...staffData, imageUrl: finalImageUrl, fullName, id: staffUid, firebaseUid: staffUid });
+        await setDoc(doc(db, 'users', staffUid), { id: staffUid, name: fullName, email: email, role: staffData.role, avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
         await signOut(secondaryAuth);
-        get().addSystemLog('Creation', `Added staff member: ${fullName}.`);
         get().notify('success', `Staff member added.`);
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { 
+        await signOut(secondaryAuth);
+        get().notify('error', err.message); 
+      }
     },
     updateStaff: async (id, data) => {
       try {
-        await updateDoc(doc(db, 'staff', id), data);
-        get().addSystemLog('Update', `Updated staff record for ${id}.`);
-        get().notify('success', 'Staff details updated.');
+        const processed = { ...data };
+        if (data.imageUrl) processed.imageUrl = extractSrcFromHtml(data.imageUrl);
+        await updateDoc(doc(db, 'staff', id), processed);
+        get().notify('success', 'Staff updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     deleteStaff: async (id) => {
       try {
-        const staffDoc = await getDoc(doc(db, 'staff', id));
-        if (staffDoc.exists()) {
-          const sData = staffDoc.data() as Staff;
-          await deleteDoc(doc(db, 'staff', id));
-          await deleteDoc(doc(db, 'users', id));
-          get().addSystemLog('Deletion', `Deleted staff member: ${sData.fullName}.`);
-          get().notify('success', 'Staff member removed.');
-        }
+        await deleteDoc(doc(db, 'staff', id));
+        await deleteDoc(doc(db, 'users', id));
+        get().notify('success', 'Staff removed.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     updateUserProfile: async ({ name, password }) => {
@@ -361,12 +393,8 @@ export const useStore = create<AppState>((set, get) => {
           await updateProfile(fbUser, { displayName: name });
           await updateDoc(doc(db, 'users', fbUser.uid), { name });
           set(state => ({ user: state.user ? { ...state.user, name } : null }));
-          get().addSystemLog('Update', `User changed name to ${name}.`);
         }
-        if (password) {
-          await updatePassword(fbUser, password);
-          get().addSystemLog('Update', `User changed password.`);
-        }
+        if (password) await updatePassword(fbUser, password);
         get().notify('success', 'Profile updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },
@@ -380,49 +408,42 @@ export const useStore = create<AppState>((set, get) => {
       const u = get().user;
       try {
         await addDoc(collection(db, 'clinical_logs'), { ...logData, staffId: u?.id || 'unknown' });
-        get().addSystemLog('Growth', `Recorded growth for student ${logData.studentId}.`);
         get().notify('success', 'Progress saved.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     submitApplication: async (appData) => {
       try {
         await addDoc(collection(db, 'applications'), { ...appData, status: 'Pending', timestamp: new Date().toISOString() });
-        get().addSystemLog('Application', `Job application from ${appData.fullName}.`);
-        get().notify('success', 'Application sent successfully.');
+        get().notify('success', 'Application sent.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     updateApplicationStatus: async (id, status) => {
       try {
         await updateDoc(doc(db, 'applications', id), { status });
-        get().addSystemLog('Application', `Application status: ${status} for ${id}.`);
-        get().notify('success', `Status updated: ${status}`);
+        get().notify('success', 'Status updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     submitStudentApplication: async (appData) => {
       try {
         await addDoc(collection(db, 'student_applications'), { ...appData, status: 'Pending', timestamp: new Date().toISOString() });
-        get().addSystemLog('Admission', `New online student application: ${appData.firstName} ${appData.lastName}.`);
-        get().notify('success', 'Your application has been submitted to the admin office.');
+        get().notify('success', 'Application submitted.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     updateStudentApplicationStatus: async (id, status, reply) => {
       try {
         await updateDoc(doc(db, 'student_applications', id), { status, adminReply: reply });
-        get().addSystemLog('Admission', `Student application ${id} status updated to ${status}.`);
-        get().notify('success', `Application ${status.toLowerCase()}. Notification prepared.`);
+        get().notify('success', `Status updated.`);
       } catch (err: any) { get().notify('error', err.message); }
     },
     addShopItem: async (item) => {
       try {
         await addDoc(collection(db, 'shop_items'), item);
-        get().addSystemLog('Inventory', `Added item: ${item.name}.`);
         get().notify('success', 'Item added.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     deleteShopItem: async (id) => {
       try {
         await deleteDoc(doc(db, 'shop_items', id));
-        get().addSystemLog('Inventory', `Removed item: ${id}.`);
         get().notify('success', 'Item removed.');
       } catch (err: any) { get().notify('error', err.message); }
     },
@@ -445,16 +466,14 @@ export const useStore = create<AppState>((set, get) => {
     placeOrder: async (orderData) => {
       try {
         await addDoc(collection(db, 'orders'), { ...orderData, status: 'Uncollected', timestamp: new Date().toISOString() });
-        get().addSystemLog('Purchase', `Order for ${orderData.studentName}. Total: $${orderData.total}.`);
         get().clearCart();
-        get().notify('success', 'Purchase completed successfully.');
+        get().notify('success', 'Order placed.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     updateOrderStatus: async (orderId, status) => {
       try {
         await updateDoc(doc(db, 'orders', orderId), { status });
-        get().addSystemLog('Order', `Order ${orderId} is ${status}.`);
-        get().notify('success', `Order status: ${status}`);
+        get().notify('success', 'Status updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     saveMilestoneRecord: async (record) => {
@@ -464,7 +483,6 @@ export const useStore = create<AppState>((set, get) => {
           staffId: get().user?.id || 'system',
           timestamp: new Date().toISOString()
         });
-        get().addSystemLog('Growth', `Milestone saved for student ${record.studentId}.`);
         get().notify('success', 'Record saved.');
       } catch (err: any) { get().notify('error', err.message); }
     },
@@ -476,7 +494,7 @@ export const useStore = create<AppState>((set, get) => {
     deleteMilestoneTemplate: async (id) => {
       try {
         await deleteDoc(doc(db, 'milestone_templates', id));
-        get().notify('success', 'Checklist removed.');
+        get().notify('success', 'Template removed.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     addPayment: async (payment) => {
@@ -484,7 +502,6 @@ export const useStore = create<AppState>((set, get) => {
         const hash = Math.random().toString(36).substring(2, 15);
         const qrCodeUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(hash)}`;
         await addDoc(collection(db, 'payments'), { ...payment, verificationHash: hash, qrCodeUrl: qrCodeUrl, timestamp: new Date().toISOString() });
-        get().addSystemLog('Payment', `Payment received: $${payment.amount} for ${payment.studentName}.`);
       } catch (err: any) { get().notify('error', err.message); }
     },
     addNotice: async (title, content, type, target) => {
@@ -495,9 +512,9 @@ export const useStore = create<AppState>((set, get) => {
           title, content, type, target,
           authorId: u.id, authorName: u.name,
           timestamp: new Date().toISOString(),
-          replies: []
+          replies: [],
+          views: []
         });
-        get().addSystemLog('Notice', `New announcement: ${title}.`);
       } catch (err: any) { get().notify('error', 'Notice failed.'); }
     },
     replyToNotice: async (noticeId, message) => {
@@ -511,6 +528,20 @@ export const useStore = create<AppState>((set, get) => {
         };
         await updateDoc(doc(db, 'notices', noticeId), { replies: arrayUnion(reply) });
       } catch (err: any) { get().notify('error', 'Reply failed.'); }
+    },
+    markNoticeAsViewed: async (noticeId) => {
+      const u = get().user;
+      if (!u) return;
+      const noticeRef = doc(db, 'notices', noticeId);
+      const noticeDoc = await getDoc(noticeRef);
+      if (noticeDoc.exists()) {
+        const data = noticeDoc.data() as Notice;
+        const alreadyViewed = (data.views || []).some(v => v.userId === u.id);
+        if (!alreadyViewed) {
+          const view = { userId: u.id, userName: u.name, timestamp: new Date().toISOString() };
+          await updateDoc(noticeRef, { views: arrayUnion(view) });
+        }
+      }
     }
   };
 });
