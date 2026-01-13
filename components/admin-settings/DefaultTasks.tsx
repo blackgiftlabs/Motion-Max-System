@@ -1,45 +1,69 @@
 
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ListChecks, FileText, Trash2 } from 'lucide-react';
 
 export const DefaultTasks: React.FC = () => {
-  const { settings, updateSettings } = useStore();
+  const { settings, updateSettings, notify } = useStore();
   const [newTaskStep, setNewTaskStep] = useState('');
-  const borderStyle = "border-[#154A70] dark:border-[#9DB6BF]";
 
   const handleAddTaskStep = () => {
     if (newTaskStep && !settings.defaultTaskSteps?.includes(newTaskStep)) {
       const next = [...(settings.defaultTaskSteps || []), newTaskStep];
       updateSettings({ defaultTaskSteps: next });
       setNewTaskStep('');
+      notify('success', 'Lesson item added to global template.');
     }
   };
 
   return (
-    <div className="p-16 max-w-2xl animate-in fade-in duration-500 space-y-10">
-      <div>
-        <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white tracking-tight leading-none">Task Templates</h3>
-        <p className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-widest mt-3">Pre-set steps for Teacher logs</p>
-      </div>
-      <div className="flex gap-2">
-        <input 
-          type="text" 
-          value={newTaskStep} 
-          onChange={e => setNewTaskStep(e.target.value)} 
-          onKeyDown={e => e.key === 'Enter' && handleAddTaskStep()}
-          placeholder="Enter new step description..." 
-          className={`flex-1 px-8 py-5 bg-slate-50 dark:bg-slate-950 border-2 ${borderStyle} rounded-none text-sm font-bold text-black dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 transition-all shadow-inner`} 
-        />
-        <button onClick={handleAddTaskStep} className="p-5 bg-[#154A70] text-white rounded-none shadow-xl hover:bg-slate-950 transition-all"><Plus size={24} /></button>
-      </div>
-      <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-4">
-        {(settings.defaultTaskSteps || []).map(step => (
-          <div key={step} className={`flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 border-2 ${borderStyle} rounded-none group hover:border-blue-400 transition-all`}>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-white">{step}</span>
-            <button onClick={() => updateSettings({ defaultTaskSteps: settings.defaultTaskSteps?.filter(s => s !== step) })} className="text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all p-2"><X size={20}/></button>
-          </div>
-        ))}
+    <div className="p-8 lg:p-12 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-ghBorder pb-8 mb-8">
+        <div>
+          <h3 className="text-xl font-bold text-ghText tracking-tight">Global Lesson Template</h3>
+          <p className="text-sm text-slate-500 mt-1">Add items that will appear by default in every teacher's new lesson plan.</p>
+        </div>
+        <div className="flex gap-2">
+          <input 
+            type="text" 
+            value={newTaskStep} 
+            onChange={e => setNewTaskStep(e.target.value)} 
+            onKeyDown={e => e.key === 'Enter' && handleAddTaskStep()}
+            placeholder="Describe the lesson item..." 
+            className="px-4 py-2 text-sm bg-white border border-ghBorder rounded-md font-medium text-ghText outline-none w-64 focus:ring-2 focus:ring-googleBlue/20 focus:border-googleBlue transition-all shadow-sm" 
+          />
+          <button onClick={handleAddTaskStep} className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-googleBlue transition-all flex items-center gap-2 shadow-sm active:scale-95">
+             <Plus size={18}/> Add Item
+          </button>
+        </div>
+      </header>
+
+      <div className="bg-white border border-ghBorder rounded-md overflow-hidden shadow-sm">
+        <div className="bg-ghBg px-6 py-3 border-b border-ghBorder">
+           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Current Template Items</p>
+        </div>
+        
+        <div className="divide-y divide-ghBorder">
+          {!settings.defaultTaskSteps || settings.defaultTaskSteps.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white">
+              <FileText size={32} className="text-slate-200 mb-3" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest italic">No items set.</p>
+            </div>
+          ) : settings.defaultTaskSteps.map((step, idx) => (
+            <div key={idx} className="flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group">
+              <div className="flex items-center gap-4">
+                 <span className="text-[11px] font-bold text-slate-300 font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
+                 <span className="text-sm font-medium text-ghText">{step}</span>
+              </div>
+              <button 
+                onClick={() => updateSettings({ defaultTaskSteps: settings.defaultTaskSteps?.filter(s => s !== step) })} 
+                className="p-2 text-slate-300 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+              >
+                 <Trash2 size={16}/>
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

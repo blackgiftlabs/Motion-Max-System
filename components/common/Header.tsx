@@ -16,7 +16,7 @@ export const Header: React.FC = () => {
   }, [notices, user]);
 
   return (
-    <header className="h-16 bg-white/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800 px-6 md:px-10 flex items-center justify-between sticky top-0 z-[20000] backdrop-blur-md">
+    <header className="h-16 bg-white/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800 px-6 md:px-10 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
       {/* Left side: Navigation Toggle (Mobile) */}
       <div className="flex items-center gap-5">
         <button 

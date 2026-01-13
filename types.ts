@@ -9,6 +9,17 @@ export interface User {
   avatar?: string;
 }
 
+export interface MedicalRecordEntry {
+  id: string;
+  date: string;
+  content: string;
+  type: 'DIAGNOSIS' | 'OBSERVATION';
+  staffId: string;
+  staffName: string;
+  pdfUrl?: string;
+  pdfName?: string;
+}
+
 export interface Student {
   id: string;
   firstName: string;
@@ -23,7 +34,7 @@ export interface Student {
   parentEmail: string;
   homeAddress: string;
   diagnosis: string;
-  diagnosisPdf?: string; // Base64 or URL for the PDF file
+  diagnosisPdf?: string; 
   medicalRecords: string;
   socialHistory: string;
   targetBehaviors: string;
@@ -33,6 +44,7 @@ export interface Student {
   imageUrl?: string;
   firebaseUid?: string;
   totalPaid?: number;
+  healthHistory?: MedicalRecordEntry[];
 }
 
 export interface StudentApplication {
@@ -185,8 +197,8 @@ export interface SystemSettings {
   classes: string[];
   feesAmount: number;
   currentTerm: string;
-  nextTermStartDate?: string; // New: When the next term starts
-  defaultTaskSteps?: string[]; // New: Template steps for task analysis
+  nextTermStartDate?: string; 
+  defaultTaskSteps?: string[]; 
 }
 
 export type PromptLevel = '+' | 'FP' | 'PP' | 'DV' | 'IDV' | 'GP' | 'VP' | '-';

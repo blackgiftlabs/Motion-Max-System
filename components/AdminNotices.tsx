@@ -32,7 +32,7 @@ export const AdminNotices: React.FC = () => {
     setIsSending(true);
     try {
       await addNotice(title, content, type, target);
-      notify('success', 'Message posted successfully.');
+      notify('success', 'Announcement posted successfully.');
       setTitle('');
       setContent('');
     } catch (err) {
@@ -47,8 +47,8 @@ export const AdminNotices: React.FC = () => {
       notify('info', 'No unpaid balances found.');
       return;
     }
-    setTitle('Tuition Fee Reminder');
-    setContent(`Hello parents. We found ${studentsWithBalance.length} accounts that still need to pay school fees. Please visit the office soon to update your child's record. Thank you.`);
+    setTitle('Reminder: School Fees Payment');
+    setContent(`Dear Parents, we noticed that ${studentsWithBalance.length} accounts still have outstanding balances. Please visit the office to update your child's record. Thank you.`);
     setType('Fees');
     setTarget('PARENT');
     notify('success', 'Fee reminder draft created.');
@@ -56,8 +56,8 @@ export const AdminNotices: React.FC = () => {
 
   const handleGenerateMeetingDraft = (group: 'Staff' | 'Teachers') => {
     const isTeachers = group === 'Teachers';
-    setTitle(`${group} Meeting Notification`);
-    setContent(`All ${group} members must attend a meeting tomorrow morning at 08:00 AM. We will talk about school plans and the new term.`);
+    setTitle(`Important Meeting for ${group}`);
+    setContent(`All members of the ${group} team are required to attend a meeting tomorrow at 08:00 AM in the main hall. We will discuss upcoming plans.`);
     setType('Meeting');
     setTarget(isTeachers ? 'SPECIALIST' : 'ADMIN_SUPPORT');
     notify('success', `${group} meeting draft created.`);
@@ -69,72 +69,59 @@ export const AdminNotices: React.FC = () => {
     setReplyText('');
   };
 
-  const scrollToHistory = () => {
-    document.getElementById('history-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 max-w-7xl mx-auto pb-20 selection:bg-blue-100 selection:text-blue-900">
-      {/* Header Section */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-8">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pb-20">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-ghBorder pb-6">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Bell size={18} className="text-googleBlue" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-googleBlue">Terminal Communications</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Bell size={16} className="text-googleBlue" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Communications Portal</span>
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Notice Board</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-3 italic">Broadcast official updates to the school node.</p>
+          <h1 className="text-3xl font-bold text-ghText uppercase tracking-tight">Announcements</h1>
+          <p className="text-sm text-slate-500 mt-1">Send messages and updates to parents and staff.</p>
         </div>
-        <button 
-          onClick={scrollToHistory}
-          className="flex items-center gap-3 px-8 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm rounded-none active:scale-95"
-        >
-          <History size={16} /> History Registry
-        </button>
       </header>
 
-      {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Form Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Post Announcement Area */}
         <div className="lg:col-span-8">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white flex items-center gap-3">
-                 <MessageSquare size={14} className="text-googleBlue" /> New Announcement
-               </h3>
+          <div className="gh-box bg-white overflow-hidden shadow-sm">
+            <div className="px-6 py-4 bg-ghBg border-b border-ghBorder flex items-center gap-3">
+               <MessageSquare size={16} className="text-slate-500" />
+               <h3 className="text-xs font-bold uppercase tracking-wide text-ghText">Create New Post</h3>
             </div>
             
-            <form onSubmit={handleSend} className="p-8 space-y-8">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Message Title</label>
+            <form onSubmit={handleSend} className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-600 uppercase">Announcement Title</label>
                 <input 
                   required 
                   value={title} 
                   onChange={e => setTitle(e.target.value)} 
-                  placeholder="Enter a subject line..." 
-                  className="w-full px-6 py-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-none text-sm font-bold outline-none focus:border-googleBlue focus:ring-4 focus:ring-blue-500/5 transition-all dark:text-white" 
+                  placeholder="What is this about?" 
+                  className="w-full px-4 py-3 bg-white border border-ghBorder rounded-md text-sm outline-none focus:ring-2 focus:ring-googleBlue/20 focus:border-googleBlue transition-all" 
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Notice Type</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-600 uppercase">Message Category</label>
                   <select 
                     value={type} 
                     onChange={e => setType(e.target.value as any)} 
-                    className="w-full px-5 py-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-none text-[10px] font-black uppercase outline-none cursor-pointer dark:text-white transition-all focus:border-googleBlue focus:ring-4 focus:ring-blue-500/5"
+                    className="w-full px-4 py-3 bg-ghBg border border-ghBorder rounded-md text-xs font-bold uppercase outline-none cursor-pointer"
                   >
                     <option value="General">General News</option>
-                    <option value="Fees">Tuition & Fees</option>
-                    <option value="Meeting">Meeting Alert</option>
+                    <option value="Fees">Money & Fees</option>
+                    <option value="Meeting">Meetings</option>
                   </select>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Audience</label>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-600 uppercase">Who can see this?</label>
                   <select 
                     value={target} 
                     onChange={e => setTarget(e.target.value as any)} 
-                    className="w-full px-5 py-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-none text-[10px] font-black uppercase outline-none cursor-pointer dark:text-white transition-all focus:border-googleBlue focus:ring-4 focus:ring-blue-500/5"
+                    className="w-full px-4 py-3 bg-ghBg border border-ghBorder rounded-md text-xs font-bold uppercase outline-none cursor-pointer"
                   >
                     <option value="ALL">Everyone</option>
                     <option value="PARENT">Parents Only</option>
@@ -144,77 +131,67 @@ export const AdminNotices: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white ml-1">Message Content</label>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-600 uppercase">Details</label>
                 <textarea 
                   required 
                   value={content} 
                   onChange={e => setContent(e.target.value)} 
-                  placeholder="Type your announcement details here..." 
-                  rows={5} 
-                  className="w-full px-6 py-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-none text-sm font-medium outline-none focus:border-googleBlue focus:ring-4 focus:ring-blue-500/5 resize-none dark:text-white transition-all" 
+                  placeholder="Write your message here..." 
+                  rows={4} 
+                  className="w-full px-4 py-3 bg-white border border-ghBorder rounded-md text-sm outline-none focus:ring-2 focus:ring-googleBlue/20 focus:border-googleBlue resize-none" 
                 />
               </div>
 
-              <button 
-                type="submit" 
-                disabled={isSending} 
-                className="w-full py-6 bg-slate-900 dark:bg-blue-600 text-white rounded-none font-black uppercase tracking-[0.3em] text-[11px] hover:bg-googleBlue transition-all flex items-center justify-center gap-4 disabled:opacity-50 active:scale-95 shadow-xl"
-              >
-                {isSending ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Post Message Now</>}
-              </button>
+              <div className="pt-2">
+                <button 
+                  type="submit" 
+                  disabled={isSending} 
+                  className="px-8 py-3 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest hover:bg-googleBlue transition-all flex items-center gap-3 disabled:opacity-50 active:scale-95"
+                >
+                  {isSending ? <Loader2 className="animate-spin" size={16} /> : <><Send size={16} /> Post Announcement</>}
+                </button>
+              </div>
             </form>
           </div>
         </div>
 
-        {/* Sidebar Tools Area */}
+        {/* Templates Sidebar */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-8 rounded-none space-y-8 h-full">
-            <header>
-               <div className="flex items-center gap-2 mb-2">
-                  <Sparkles size={16} className="text-amber-500" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Helper Tools</h3>
-               </div>
-               <h4 className="text-xl font-black uppercase text-slate-900 dark:text-white tracking-tight">Quick Drafts</h4>
+          <div className="gh-box bg-ghBg p-6 space-y-6">
+            <header className="flex items-center gap-2 border-b border-ghBorder pb-4">
+               <Sparkles size={16} className="text-amber-500" />
+               <h3 className="text-xs font-bold uppercase text-ghText">Quick Drafts</h3>
             </header>
 
-            <div className="space-y-4">
-              <button 
-                onClick={handleGenerateDraft} 
-                className="w-full group flex items-center gap-4 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-googleBlue transition-all text-left rounded-none shadow-sm"
-              >
-                <div className="p-3 bg-rose-50 text-rose-600 border border-rose-100 rounded-none group-hover:bg-rose-600 group-hover:text-white transition-colors">
-                  <DollarSign size={20} />
+            <div className="space-y-3">
+              <button onClick={handleGenerateDraft} className="w-full flex items-center gap-3 p-3 bg-white border border-ghBorder hover:border-googleBlue rounded-md transition-all text-left group">
+                <div className="p-2 bg-rose-50 text-rose-600 rounded-md">
+                  <DollarSign size={16} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-tight dark:text-white">Fee Reminder</p>
-                  <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">{studentsWithBalance.length} unpaid nodes</p>
+                  <p className="text-[11px] font-bold text-ghText">Fee Payment Reminder</p>
+                  <p className="text-[9px] text-slate-400 uppercase font-bold">{studentsWithBalance.length} accounts pending</p>
                 </div>
               </button>
 
-              <button 
-                onClick={() => handleGenerateMeetingDraft('Teachers')} 
-                className="w-full group flex items-center gap-4 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-googleBlue transition-all text-left rounded-none shadow-sm"
-              >
-                <div className="p-3 bg-blue-50 text-blue-600 border border-blue-100 rounded-none group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Calendar size={20} />
+              <button onClick={() => handleGenerateMeetingDraft('Teachers')} className="w-full flex items-center gap-3 p-3 bg-white border border-ghBorder hover:border-googleBlue rounded-md transition-all text-left group">
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
+                  <Calendar size={16} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-tight dark:text-white">Teacher Meeting</p>
-                  <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Registry coordination</p>
+                  <p className="text-[11px] font-bold text-ghText">Teacher Meeting</p>
+                  <p className="text-[9px] text-slate-400 uppercase font-bold">Standard invite</p>
                 </div>
               </button>
 
-              <button 
-                onClick={() => handleGenerateMeetingDraft('Staff')} 
-                className="w-full group flex items-center gap-4 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-googleBlue transition-all text-left rounded-none shadow-sm"
-              >
-                <div className="p-3 bg-slate-100 text-slate-600 border border-slate-200 rounded-none group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                  <Clock size={20} />
+              <button onClick={() => handleGenerateMeetingDraft('Staff')} className="w-full flex items-center gap-3 p-3 bg-white border border-ghBorder hover:border-googleBlue rounded-md transition-all text-left group">
+                <div className="p-2 bg-slate-100 text-slate-600 rounded-md">
+                  <Clock size={16} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-tight dark:text-white">Staff Update</p>
-                  <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Admin support draft</p>
+                  <p className="text-[11px] font-bold text-ghText">Staff Update</p>
+                  <p className="text-[9px] text-slate-400 uppercase font-bold">General assembly</p>
                 </div>
               </button>
             </div>
@@ -222,81 +199,78 @@ export const AdminNotices: React.FC = () => {
         </div>
       </div>
 
-      {/* History Section */}
-      <section id="history-section" className="space-y-6 pt-12 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
-          <div className="flex items-center gap-3">
-             <History size={18} className="text-googleBlue" />
-             <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Message Registry</h2>
+      {/* Message History Table */}
+      <section className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+             <History size={16} className="text-slate-400" />
+             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Previous Messages</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative group w-full md:w-64">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Filter history..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none text-[10px] font-black uppercase tracking-widest outline-none focus:border-googleBlue transition-all"
-              />
-            </div>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search history..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-1.5 bg-white border border-ghBorder rounded-md text-xs outline-none focus:border-googleBlue w-64"
+            />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none overflow-hidden shadow-sm">
+        <div className="gh-box bg-white overflow-hidden shadow-sm">
            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                 <thead className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                 <thead className="bg-ghBg border-b border-ghBorder text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <tr>
-                       <th className="px-8 py-5">Subject / content</th>
-                       <th className="px-8 py-5">Audience</th>
-                       <th className="px-8 py-5">Category</th>
-                       <th className="px-8 py-5 text-center">Replies</th>
-                       <th className="px-8 py-5 text-right">Logged Date</th>
+                       <th className="px-6 py-3">Subject & Content</th>
+                       <th className="px-6 py-3">Audience</th>
+                       <th className="px-6 py-3">Category</th>
+                       <th className="px-6 py-3 text-center">Comments</th>
+                       <th className="px-6 py-3 text-right">Date Posted</th>
                     </tr>
                  </thead>
-                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                 <tbody className="divide-y divide-ghBorder">
                     {filteredNotices.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-24 text-center">
-                           <Bell size={48} className="mx-auto text-slate-200 mb-4 opacity-50" />
-                           <p className="text-[10px] font-black uppercase text-slate-300 italic tracking-widest">No matching registry entries</p>
+                        <td colSpan={5} className="py-16 text-center">
+                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No matching messages found.</p>
                         </td>
                       </tr>
                     ) : filteredNotices.map(notice => (
                       <tr 
                         key={notice.id} 
-                        className="hover:bg-slate-50/50 dark:hover:bg-blue-900/5 group transition-colors cursor-pointer"
+                        className="hover:bg-slate-50 transition-colors cursor-pointer group"
                         onClick={() => setSelectedNotice(notice)}
                       >
-                         <td className="px-8 py-6">
-                            <p className="text-[11px] font-black uppercase tracking-tight text-slate-950 dark:text-white leading-none">{notice.title}</p>
-                            <p className="text-[10px] text-slate-400 mt-2 line-clamp-1 italic">"{notice.content}"</p>
+                         <td className="px-6 py-4">
+                            <p className="text-[13px] font-bold text-ghText leading-none">{notice.title}</p>
+                            <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 italic">"{notice.content}"</p>
                          </td>
-                         <td className="px-8 py-6">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-none border border-slate-200 dark:border-slate-700">
+                         <td className="px-6 py-4">
+                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 bg-white border border-ghBorder rounded text-slate-600">
                                {notice.target}
                             </span>
                          </td>
-                         <td className="px-8 py-6">
-                            <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-none border ${
+                         <td className="px-6 py-4">
+                            <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded border ${
                               notice.type === 'Fees' ? 'bg-rose-50 text-rose-600 border-rose-100' : 
                               notice.type === 'Meeting' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                              'bg-slate-50 text-slate-600 border-slate-100'
+                              'bg-ghBg text-slate-600 border-ghBorder'
                             }`}>
                                {notice.type}
                             </span>
                          </td>
-                         <td className="px-8 py-6 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                               <MessageSquare size={12} className="text-slate-300" />
-                               <span className="text-[10px] font-black font-mono text-slate-700 dark:text-slate-400">{notice.replies?.length || 0}</span>
+                         <td className="px-6 py-4 text-center">
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+                               <MessageSquare size={12} />
+                               {notice.replies?.length || 0}
                             </div>
                          </td>
-                         <td className="px-8 py-6 text-right">
+                         <td className="px-6 py-4 text-right">
                             <div className="flex flex-col items-end">
-                               <p className="text-[10px] font-mono font-bold text-slate-400">{new Date(notice.timestamp).toLocaleDateString()}</p>
-                               <ChevronRight size={14} className="text-slate-200 mt-2 group-hover:text-googleBlue group-hover:translate-x-1 transition-all" />
+                               <p className="text-[11px] font-mono text-slate-400">{new Date(notice.timestamp).toLocaleDateString()}</p>
+                               <ChevronRight size={14} className="text-slate-300 group-hover:text-googleBlue transition-all mt-1" />
                             </div>
                          </td>
                       </tr>
@@ -304,97 +278,77 @@ export const AdminNotices: React.FC = () => {
                  </tbody>
               </table>
            </div>
-           <div className="p-8 bg-slate-50 dark:bg-slate-950/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-slate-400">
-                 <CheckCircle2 size={16} className="text-emerald-500" />
-                 <span className="text-[9px] font-black uppercase tracking-widest">Database Sync Active</span>
-              </div>
-              <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredNotices.length} Total Messages Logged</p>
-           </div>
         </div>
       </section>
 
-      {/* Detail Slide-over */}
+      {/* Detail View Slide-over */}
       {selectedNotice && (
         <div className="fixed inset-0 z-[500] flex justify-end">
-          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={() => setSelectedNotice(null)} />
-          <aside className="relative w-full max-w-lg bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 rounded-none border-l border-slate-200 dark:border-slate-800">
-            <header className="p-8 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 sticky top-0 z-10 shadow-sm">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedNotice(null)} />
+          <aside className="relative w-full max-w-lg bg-white shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 border-l border-ghBorder">
+            <header className="px-6 py-4 border-b border-ghBorder flex items-center justify-between bg-ghBg sticky top-0 z-10">
               <div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Broadcast Detail</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Audit Log Node</p>
+                <h2 className="text-sm font-bold text-ghText uppercase tracking-wide">Announcement Detail</h2>
               </div>
-              <button onClick={() => setSelectedNotice(null)} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-none text-slate-400 transition-colors"><X size={28} /></button>
+              <button onClick={() => setSelectedNotice(null)} className="p-1 hover:bg-slate-200 rounded transition-colors text-slate-500"><X size={20} /></button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 sidebar-scrollbar bg-slate-50/30 dark:bg-slate-950/40">
-              <div className="bg-white dark:bg-slate-900 p-8 border border-slate-200 dark:border-slate-800 rounded-none shadow-sm">
-                <span className={`px-3 py-1 rounded-none text-[9px] font-black uppercase border mb-6 inline-block ${
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+              <div className="gh-box bg-white p-6 space-y-4">
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border inline-block ${
                   selectedNotice.type === 'Fees' ? 'bg-rose-50 text-rose-600 border-rose-100' : 
                   selectedNotice.type === 'Meeting' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                  'bg-slate-50 text-slate-600 border-slate-100'
+                  'bg-ghBg text-slate-600 border-ghBorder'
                 }`}>
                   {selectedNotice.type}
                 </span>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{selectedNotice.title}</h3>
-                <p className="text-base text-slate-600 dark:text-slate-300 mt-6 leading-relaxed italic border-l-4 border-googleBlue/20 pl-6 py-2 font-medium">"{selectedNotice.content}"</p>
+                <h3 className="text-xl font-bold text-ghText leading-tight">{selectedNotice.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium bg-ghBg/50 p-4 border-l-4 border-ghBorder italic">
+                  "{selectedNotice.content}"
+                </p>
                 
-                <div className="mt-8 flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-slate-900 text-white rounded-none flex items-center justify-center font-black text-[10px] uppercase border border-white/10">
-                        {selectedNotice.authorName[0]}
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">By {selectedNotice.authorName}</span>
-                   </div>
-                   <span className="text-[10px] font-mono text-slate-400 uppercase">{new Date(selectedNotice.timestamp).toLocaleString()}</span>
+                <div className="pt-4 border-t border-ghBorder flex items-center justify-between text-[11px] text-slate-400">
+                   <span className="font-bold">Sent by {selectedNotice.authorName}</span>
+                   <span className="font-mono">{new Date(selectedNotice.timestamp).toLocaleString()}</span>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-center justify-between px-2">
-                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Replies ({selectedNotice.replies?.length || 0})</h4>
-                   <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800 mx-4"></div>
-                </div>
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-ghBorder pb-2">Comments ({selectedNotice.replies?.length || 0})</h4>
                 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {selectedNotice.replies?.map((r: any, idx: number) => (
-                    <div key={idx} className={`p-6 rounded-none border transition-all ${r.userId === user?.id ? 'bg-blue-50/50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-none bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200 uppercase">{r.userName[0]}</div>
-                          <div>
-                             <span className="text-xs font-black dark:text-white uppercase tracking-tight">{r.userName}</span>
-                             <p className="text-[8px] text-slate-400 font-mono mt-0.5 uppercase">{new Date(r.timestamp).toLocaleTimeString()}</p>
-                          </div>
-                        </div>
+                    <div key={idx} className={`p-4 rounded-md border ${r.userId === user?.id ? 'bg-blue-50/50 border-blue-100' : 'bg-white border-ghBorder'}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase">{r.userName[0]}</div>
+                        <span className="text-[11px] font-bold text-ghText">{r.userName}</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">{new Date(r.timestamp).toLocaleTimeString()}</span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium pl-1 italic">"{r.message}"</p>
+                      <p className="text-[13px] text-slate-600 leading-relaxed italic">"{r.message}"</p>
                     </div>
                   ))}
                   {(!selectedNotice.replies || selectedNotice.replies.length === 0) && (
-                    <div className="py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-none">
-                       <p className="text-[10px] font-black uppercase text-slate-300 italic tracking-widest">No community feedback nodes</p>
-                    </div>
+                    <p className="text-xs text-slate-400 italic text-center py-8 uppercase tracking-widest">No comments yet.</p>
                   )}
                 </div>
               </div>
             </div>
 
-            <footer className="p-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-              <div className="relative group">
+            <footer className="p-6 border-t border-ghBorder bg-ghBg">
+              <div className="flex gap-2">
                 <textarea 
                   value={replyText} 
                   onChange={e => setReplyText(e.target.value)} 
-                  placeholder="Type a response node..." 
-                  className="w-full p-6 pr-28 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none text-sm font-bold outline-none focus:border-googleBlue focus:bg-white dark:focus:bg-slate-800 transition-all resize-none shadow-inner dark:text-white" 
-                  rows={2} 
+                  placeholder="Write a comment..." 
+                  className="flex-1 p-3 bg-white border border-ghBorder rounded-md text-sm outline-none focus:ring-2 focus:ring-googleBlue/20 focus:border-googleBlue resize-none" 
+                  rows={1} 
                 />
                 <button 
                   onClick={handleReply} 
                   disabled={!replyText} 
-                  className="absolute right-4 bottom-4 px-8 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-none text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-googleBlue transition-all disabled:opacity-50 active:scale-95"
+                  className="px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase disabled:opacity-50 active:scale-95"
                 >
-                  Send Reply
+                  Send
                 </button>
               </div>
             </footer>

@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication } from '../types';
+import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication, MedicalRecordEntry } from '../types';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { 
   getAuth, 
@@ -145,6 +145,8 @@ interface AppState {
   addNotice: (title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<void>;
   replyToNotice: (noticeId: string, message: string) => Promise<void>;
   markNoticeAsViewed: (noticeId: string) => Promise<void>;
+  addHealthRecordEntry: (studentUid: string, entry: Omit<MedicalRecordEntry, 'id'>) => Promise<void>;
+  updateHealthRecordEntry: (studentUid: string, entryId: string, data: Partial<MedicalRecordEntry>) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => {
@@ -232,7 +234,7 @@ export const useStore = create<AppState>((set, get) => {
     setActiveTab: (activeTab) => set({ activeTab, isMobileMenuOpen: false }),
     initializeData: () => {
       onSnapshot(query(collection(db, 'students'), orderBy('fullName')), (snapshot) => {
-        set({ students: snapshot.docs.map(doc => ({ ...doc.data() } as Student)) });
+        set({ students: snapshot.docs.map(doc => ({ ...doc.data(), firebaseUid: doc.id } as Student)) });
       });
       onSnapshot(query(collection(db, 'staff'), orderBy('fullName')), (snapshot) => {
         set({ staff: snapshot.docs.map(doc => ({ ...doc.data() } as Staff)) });
@@ -305,7 +307,7 @@ export const useStore = create<AppState>((set, get) => {
         const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentEmail, "000000");
         const studentUid = studentUserCredential.user.uid;
         
-        const finalStudent = { ...studentData, imageUrl: finalImageUrl, fullName, id: formattedId, firebaseUid: studentUid, totalPaid: 0 };
+        const finalStudent = { ...studentData, imageUrl: finalImageUrl, fullName, id: formattedId, firebaseUid: studentUid, totalPaid: 0, healthHistory: [] };
         await setDoc(doc(db, 'students', studentUid), finalStudent);
         await setDoc(doc(db, 'users', studentUid), { id: studentUid, name: fullName, email: studentEmail, role: 'STUDENT', avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
         
@@ -543,6 +545,27 @@ export const useStore = create<AppState>((set, get) => {
           await updateDoc(noticeRef, { views: arrayUnion(view) });
         }
       }
-    }
+    },
+    addHealthRecordEntry: async (studentUid, entry) => {
+      try {
+        const studentRef = doc(db, 'students', studentUid);
+        const newEntry = { ...entry, id: Math.random().toString(36).substring(7) };
+        await updateDoc(studentRef, { healthHistory: arrayUnion(newEntry) });
+        get().notify('success', 'Record added.');
+      } catch (err: any) { get().notify('error', err.message); }
+    },
+    updateHealthRecordEntry: async (studentUid, entryId, data) => {
+      try {
+        const studentRef = doc(db, 'students', studentUid);
+        const studentDoc = await getDoc(studentRef);
+        if (studentDoc.exists()) {
+          const studentData = studentDoc.data() as Student;
+          const history = studentData.healthHistory || [];
+          const updatedHistory = history.map(h => h.id === entryId ? { ...h, ...data } : h);
+          await updateDoc(studentRef, { healthHistory: updatedHistory });
+          get().notify('success', 'Record updated.');
+        }
+      } catch (err: any) { get().notify('error', err.message); }
+    },
   };
 });
