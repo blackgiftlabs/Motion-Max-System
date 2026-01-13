@@ -45,7 +45,6 @@ const db = getFirestore(app);
 const secondaryApp = getApps().length > 1 ? getApp("Secondary") : initializeApp(firebaseConfig, "Secondary");
 const secondaryAuth = getAuth(secondaryApp);
 
-// Helper to extract image URL from HTML snippets
 const extractSrcFromHtml = (input: string) => {
   if (!input) return '';
   const match = input.match(/src="([^"]+)"/);
@@ -92,6 +91,10 @@ interface AppState {
   toggleMobileMenu: (open?: boolean) => void;
   isNoticesOpen: boolean;
   toggleNotices: (open?: boolean) => void;
+  isRegistrationModalOpen: boolean;
+  setRegistrationModalOpen: (open: boolean) => void;
+  isStaffRegistrationOpen: boolean;
+  setStaffRegistrationOpen: (open: boolean) => void;
   notifications: AppNotification[];
   notify: (type: 'success' | 'error' | 'info', message: string, duration?: number) => void;
   removeNotification: (id: string) => void;
@@ -177,6 +180,10 @@ export const useStore = create<AppState>((set, get) => {
     toggleMobileMenu: (open) => set((state) => ({ isMobileMenuOpen: open !== undefined ? open : !state.isMobileMenuOpen })),
     isNoticesOpen: false,
     toggleNotices: (open) => set((state) => ({ isNoticesOpen: open !== undefined ? open : !state.isNoticesOpen })),
+    isRegistrationModalOpen: false,
+    setRegistrationModalOpen: (open) => set({ isRegistrationModalOpen: open }),
+    isStaffRegistrationOpen: false,
+    setStaffRegistrationOpen: (open) => set({ isStaffRegistrationOpen: open }),
     notifications: [],
     notify: (type, message, duration = 5000) => {
       const id = Math.random().toString(36).substring(7);
@@ -273,7 +280,6 @@ export const useStore = create<AppState>((set, get) => {
         const settingsRef = doc(db, 'settings', 'global');
         await setDoc(settingsRef, { ...oldSettings, ...newSettings }, { merge: true });
 
-        // Automated notice for next term start
         if (newSettings.nextTermStartDate && newSettings.nextTermStartDate !== oldSettings.nextTermStartDate) {
           await get().addNotice(
             "Upcoming Term Schedule", 
@@ -293,13 +299,9 @@ export const useStore = create<AppState>((set, get) => {
         const count = snapshot.size + 1;
         const formattedId = `MM${count.toString().padStart(3, '0')}`;
         
-        // UNIQUE STUDENT EMAIL
         const studentEmail = `${formattedId.toLowerCase()}@motionmax.com`;
-        
-        // PARSE IMAGE
         const finalImageUrl = extractSrcFromHtml(studentData.imageUrl || '');
         
-        // 1. Student Auth
         const studentUserCredential = await createUserWithEmailAndPassword(secondaryAuth, studentEmail, "000000");
         const studentUid = studentUserCredential.user.uid;
         
@@ -307,7 +309,6 @@ export const useStore = create<AppState>((set, get) => {
         await setDoc(doc(db, 'students', studentUid), finalStudent);
         await setDoc(doc(db, 'users', studentUid), { id: studentUid, name: fullName, email: studentEmail, role: 'STUDENT', avatar: finalImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}` });
         
-        // 2. Parent Account (Handle Siblings)
         const parentEmail = studentData.parentEmail.toLowerCase().trim();
         const usersRef = collection(db, 'users');
         const parentQuery = query(usersRef, where('email', '==', parentEmail));

@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { ChevronRight, FileSpreadsheet, Brain, Download, Loader2, FileText, Printer } from 'lucide-react';
+import { ChevronRight, FileSpreadsheet, Brain, Download, Loader2, FileText, Printer, Calendar } from 'lucide-react';
 import { SessionLog, MilestoneRecord, Student } from '../../types';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -29,10 +29,15 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
     return `${start.toISOString().split('T')[0]} to ${end.toISOString().split('T')[0]}`;
   };
 
-  const currentDays = useMemo(() => {
+  // Strictly Monday to Friday for the current week
+  const mondayToFriday = useMemo(() => {
     const days = [];
     const mon = new Date();
-    mon.setDate(mon.getDate() - mon.getDay() + 1);
+    // Get to the nearest previous Monday
+    const currentDay = mon.getDay();
+    const diff = currentDay === 0 ? -6 : 1 - currentDay;
+    mon.setDate(mon.getDate() + diff);
+    
     for (let i = 0; i < 5; i++) {
       const d = new Date(mon);
       d.setDate(mon.getDate() + i);
@@ -75,7 +80,6 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
     setIsExporting(reportId);
     const doc = new jsPDF();
     
-    // Header - School Logo & Details
     try {
       doc.addImage(LogoImg, 'PNG', 15, 10, 25, 25);
     } catch (e) {
@@ -90,7 +94,6 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
     doc.text("admin@motionmax.co.zw", 195, 20, { align: 'right' });
     doc.text("+263 775 926 454", 195, 25, { align: 'right' });
 
-    // Report Identity
     doc.setDrawColor(200);
     doc.line(15, 40, 195, 40);
     
@@ -104,7 +107,6 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
     doc.text(`Class Room: ${student.assignedClass}`, 15, 74);
     doc.text(`Printed On: ${new Date().toLocaleDateString()}`, 195, 62, { align: 'right' });
 
-    // Data Table
     const tableBody = dataLogs.map(l => [
       new Date(l.date).toLocaleDateString(),
       l.targetBehavior,
@@ -122,7 +124,6 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
       alternateRowStyles: { fillColor: [245, 248, 250] }
     });
 
-    // Growth Summary Table (Checklists)
     if (dataChecks.length > 0) {
       doc.addPage();
       doc.setFontSize(16);
@@ -140,7 +141,6 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
       });
     }
 
-    // Footer
     const pageCount = (doc as any).internal.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -159,12 +159,17 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-900 dark:border-slate-800 pb-6">
-        <div>
-          <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white leading-none">School Progress</h3>
-          <p className="text-[10px] font-black text-slate-500 uppercase mt-2 tracking-widest italic">View the child's learning history</p>
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-600 text-white rounded-none">
+             <Calendar size={24} />
+          </div>
+          <div>
+            <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white leading-none">Activity Registry</h3>
+            <p className="text-[10px] font-black text-slate-500 uppercase mt-2 tracking-widest italic">Monday to Friday Node Tracker</p>
+          </div>
         </div>
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-none border-2 border-slate-900 dark:border-slate-800 shadow-sm">
-          {['Weekly', 'Bi-weekly', 'Monthly', 'Yearly'].map((f: any) => (
+          {['Weekly', 'Monthly', 'Yearly'].map((f: any) => (
             <button key={f} onClick={() => setFilter(f)} className={btnClass(filter === f)}>{f}</button>
           ))}
         </div>
@@ -173,37 +178,60 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
       <div className="grid grid-cols-1 gap-6">
         {filter === 'Weekly' && (
           <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-slate-800 rounded-none overflow-hidden shadow-sm">
-            <div className="bg-slate-50 dark:bg-slate-800 p-6 border-b border-slate-200 dark:border-slate-700">
-              <h4 className="text-sm font-black uppercase text-slate-900 dark:text-white">This Week's Activity</h4>
-              <p className="text-[10px] font-mono font-bold text-slate-900 dark:text-white mt-1">{getWeekRange(new Date())}</p>
+            <div className="bg-slate-50 dark:bg-slate-800 p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-tight">Active School Week</h4>
+                <p className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-widest">{getWeekRange(new Date())}</p>
+              </div>
+              <div className="text-right hidden sm:block">
+                 <span className="text-[8px] font-black uppercase text-slate-400 block tracking-widest">Registry ID</span>
+                 <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-white uppercase">WK-{new Date().getFullYear()}-{Math.ceil(new Date().getDate()/7)}</span>
+              </div>
             </div>
             <div className="overflow-x-auto no-scrollbar">
               <table className="w-full text-left table-fixed sm:table-auto">
                 <thead className="bg-slate-50 dark:bg-slate-950 text-[10px] font-black uppercase text-black dark:text-white border-b border-slate-900">
                   <tr>
-                    <th className="px-4 sm:px-6 py-4">Day</th>
-                    <th className="px-4 sm:px-6 py-4 hidden sm:table-cell">Summary</th>
-                    <th className="px-4 sm:px-6 py-4 text-right">Action</th>
+                    <th className="px-6 py-5 w-1/3">Day / Identity</th>
+                    <th className="px-6 py-5 hidden sm:table-cell text-center">Data Nodes</th>
+                    <th className="px-6 py-5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {currentDays.map(date => {
+                  {mondayToFriday.map(date => {
                     const dayLogs = logs.filter(l => l.date.split('T')[0] === date);
                     const dayMile = milestones.filter(m => m.timestamp.split('T')[0] === date);
+                    const isToday = new Date().toISOString().split('T')[0] === date;
+                    
                     return (
-                      <tr key={date} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <td className="px-4 sm:px-6 py-5">
-                          <p className="text-[13px] font-black uppercase text-black dark:text-white truncate">{new Date(date).toLocaleDateString('en-US', { weekday: 'long' })}</p>
-                          <p className="text-[9px] font-mono text-slate-400 font-bold">{date}</p>
+                      <tr key={date} className={`group transition-colors ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                        <td className="px-6 py-6 flex items-center gap-4">
+                          <div className={`w-12 h-12 flex flex-col items-center justify-center border-2 rounded-none transition-colors ${isToday ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 group-hover:border-blue-400'}`}>
+                             <span className="text-[8px] font-black uppercase leading-none mb-1">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                             <span className="text-sm font-black font-mono leading-none">{new Date(date).getDate()}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black uppercase text-black dark:text-white truncate tracking-tight">{new Date(date).toLocaleDateString('en-US', { weekday: 'long' })}</p>
+                            <p className="text-[9px] font-mono font-bold text-slate-400">{date}</p>
+                          </div>
                         </td>
-                        <td className="px-4 sm:px-6 py-5 hidden sm:table-cell">
-                           <div className="flex gap-4">
-                              <span className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1"><FileSpreadsheet size={12}/> {dayLogs.length} Notes</span>
-                              <span className="text-[10px] font-black text-emerald-600 uppercase flex items-center gap-1"><Brain size={12}/> {dayMile.length} Checks</span>
+                        <td className="px-6 py-6 hidden sm:table-cell text-center">
+                           <div className="flex items-center justify-center gap-2">
+                              <span className={`px-2.5 py-1 text-[9px] font-black border-2 rounded-none ${dayLogs.length > 0 ? 'bg-blue-50 text-blue-700 border-blue-600 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                                {dayLogs.length} LOGS
+                              </span>
+                              <span className={`px-2.5 py-1 text-[9px] font-black border-2 rounded-none ${dayMile.length > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-600 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                                {dayMile.length} CHECKS
+                              </span>
                            </div>
                         </td>
-                        <td className="px-4 sm:px-6 py-5 text-right">
-                           <button onClick={() => onOpenDay(date)} className="px-4 sm:px-6 py-2 bg-slate-900 dark:bg-blue-600 text-white font-black uppercase text-[9px] rounded-none active:scale-95 transition-transform">View Details</button>
+                        <td className="px-6 py-6 text-right">
+                           <button 
+                            onClick={() => onOpenDay(date)} 
+                            className="px-5 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-none active:scale-95 transition-all shadow-md hover:bg-black dark:hover:bg-blue-700"
+                           >
+                              Open Day
+                           </button>
                         </td>
                       </tr>
                     );
@@ -211,15 +239,18 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
                 </tbody>
               </table>
             </div>
+            <div className="p-6 bg-slate-50/50 dark:bg-slate-950/20 border-t border-slate-900 flex items-center justify-between">
+               <div className="flex items-center gap-3 text-slate-400">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[9px] font-black uppercase tracking-widest">Real-time Node Monitoring</span>
+               </div>
+               <p className="text-[9px] font-mono text-slate-400 uppercase">Registry Status: 1.0.4-LOCKED</p>
+            </div>
           </div>
         )}
 
         {filter === 'Monthly' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 
-              Fix: Added explicit type cast [string, any] to destructuring to resolve 'unknown' type errors 
-              when accessing data.logs and data.checks properties.
-            */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-500">
             {Object.entries(groupedMonthly).map(([key, data]: [string, any]) => {
               const monthName = new Date(key + '-01').toLocaleString('default', { month: 'long' });
               const reportTitle = `Monthly Report ${monthName} ${key.slice(0, 4)}`;
@@ -253,18 +284,14 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
             })}
             {Object.keys(groupedMonthly).length === 0 && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 opacity-50">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No monthly records found</p>
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">No monthly records found in terminal</p>
               </div>
             )}
           </div>
         )}
 
         {filter === 'Yearly' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 
-              Fix: Added explicit type cast [string, any] to destructuring to resolve 'unknown' type errors 
-              when accessing data.logs and data.checks properties.
-            */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-500">
             {Object.entries(groupedYearly).map(([year, data]: [string, any]) => {
               const reportTitle = `Annual Progress Report ${year}`;
               return (
