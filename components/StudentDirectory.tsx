@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { 
@@ -35,7 +34,7 @@ export const StudentDirectory: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Student>>({});
   const [detailRecordDay, setDetailRecordDay] = useState<string | null>(null); 
-  const [timeFilter, setTimeFilter] = useState<'Weekly' | 'Bi-weekly' | 'Monthly' | 'Yearly'>('Weekly');
+  const [timeFilter, setTimeFilter] = useState<'Weekly' | 'Monthly' | 'Yearly'>('Weekly');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   

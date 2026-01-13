@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { 
   ChevronRight, FileText, Download, Loader2, Calendar, Eye, 
@@ -171,7 +170,7 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
           body,
           theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [50], fontStyle: 'bold' }
+          headStyles: { fillColor: [240, 240, 240], textColor: [50, 50, 50], fontStyle: 'bold' }
         });
         currentY = (doc as any).lastAutoTable.finalY + 10;
       });
