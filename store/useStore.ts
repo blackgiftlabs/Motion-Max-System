@@ -28,6 +28,7 @@ import {
   arrayUnion,
   where
 } from 'firebase/firestore';
+import { getHarareISOString } from '../utils/dateUtils';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQZSWdzzx1IJWGGbxPZH7GxudX5zNYHbw",
@@ -160,7 +161,7 @@ interface AppState {
   clearCart: () => void;
   placeOrder: (orderData: Omit<Order, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'timestamp' | 'staffId'>) => Promise<void>;
+  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'staffId'>) => Promise<void>;
   saveMilestoneTemplate: (template: MilestoneTemplate) => Promise<void>;
   deleteMilestoneTemplate: (id: string) => Promise<void>;
   addPayment: (payment: Omit<PaymentRecord, 'id' | 'qrCodeUrl' | 'verificationHash'>) => Promise<void>;
@@ -549,7 +550,7 @@ export const useStore = create<AppState>((set, get) => {
         await addDoc(collection(db, 'milestone_records'), {
           ...record,
           staffId: get().user?.id || 'system',
-          timestamp: new Date().toISOString()
+          timestamp: record.timestamp || getHarareISOString()
         });
         get().notify('success', 'Record saved.');
       } catch (err: any) { get().notify('error', getFriendlyErrorMessage(err)); }
