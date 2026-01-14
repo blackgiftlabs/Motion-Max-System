@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { Student, TaskStep, PromptLevel, ProgramRequest } from '../types';
 import { PROMPT_LEVELS } from '../constants';
+import { getHarareISOString } from '../utils/dateUtils';
 
 const COMMENT_SUGGESTIONS = {
   veryLow: [
@@ -112,7 +113,6 @@ export const LessonLogs: React.FC = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fix: Explicitly defining isSpecialist and filteredStudents to resolve 'Cannot find name' error
   const isSpecialist = user?.role === 'SPECIALIST';
   const filteredStudents = useMemo(() => {
     return (students || []).filter(s => {
@@ -146,7 +146,6 @@ export const LessonLogs: React.FC = () => {
   
   const [steps, setSteps] = useState<TaskStep[]>([]);
 
-  // Fix: Adding handleAddStep function to resolve 'Cannot find name' error
   const handleAddStep = () => {
     setSteps([
       ...steps,
@@ -154,7 +153,6 @@ export const LessonLogs: React.FC = () => {
     ]);
   };
 
-  // Fix: Adding handleRemoveStep function to resolve 'Cannot find name' error
   const handleRemoveStep = (id: string) => {
     setSteps(steps.filter(s => s.id !== id));
   };
@@ -179,7 +177,6 @@ export const LessonLogs: React.FC = () => {
     { id: 'p1', activity: '', echoicTempted: 0, noVerbalTempted: 0, noEchoicNoTempting: 0 }
   ]);
 
-  // Fix: Adding handleAddProgramRequest function to resolve 'Cannot find name' error
   const handleAddProgramRequest = () => {
     setProgramRequests([
       ...programRequests,
@@ -228,7 +225,7 @@ export const LessonLogs: React.FC = () => {
     try {
       await addClinicalLog({
         studentId: selectedStudentIdForLog,
-        date: new Date().toISOString(),
+        date: getHarareISOString(), // Standardized Harare Time
         targetBehavior,
         comment: teacherComment,
         speechComment: speechComment,

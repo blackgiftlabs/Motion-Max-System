@@ -25,6 +25,7 @@ import {
   Info
 } from 'lucide-react';
 import { MilestoneRecord } from '../types';
+import { getHarareISOString } from '../utils/dateUtils';
 
 const calculateAgeMonths = (dob: string) => {
   if (!dob) return 0;
@@ -54,7 +55,6 @@ export const ClinicalABA: React.FC = () => {
     }
   }, [isRestrictedRole]);
 
-  // If coming from student profile, go to checklist creation
   useEffect(() => {
     if (selectedStudentIdForLog && !isRestrictedRole) {
       setActiveTab('new');
@@ -109,7 +109,8 @@ export const ClinicalABA: React.FC = () => {
         ageCategory: activeTemplate.label,
         sections,
         redFlags,
-        overallPercentage: Math.round((checkedCount / (totalItems || 1)) * 100)
+        overallPercentage: Math.round((checkedCount / (totalItems || 1)) * 100),
+        timestamp: getHarareISOString() // Standardized Harare Time
       });
       
       setActiveTemplateId(null);
@@ -140,8 +141,6 @@ export const ClinicalABA: React.FC = () => {
     const totalItems = activeTemplate.sections.reduce((acc, s) => acc + s.items.length, 0);
     return Math.round((checkedItems.size / (totalItems || 1)) * 100);
   };
-
-  const inputStyle = "w-full p-4 border-2 border-[#183D4A] dark:border-[#9DB6BF] text-black dark:text-white bg-white dark:bg-slate-900 rounded-none outline-none font-bold";
 
   if (!selectedStudent) {
     return (
@@ -261,7 +260,9 @@ export const ClinicalABA: React.FC = () => {
                       className="hover:bg-slate-50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer group"
                       onClick={() => setViewingRecord(record)}
                      >
-                        <td className="px-8 py-6 font-mono font-bold text-xs dark:text-white">{new Date(record.timestamp).toLocaleDateString()}</td>
+                        <td className="px-8 py-6 font-mono font-bold text-xs dark:text-white">
+                          {new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Harare' }).format(new Date(record.timestamp))}
+                        </td>
                         <td className="px-8 py-6 uppercase font-black text-[11px] text-slate-600 dark:text-slate-300">{record.ageCategory}</td>
                         <td className="px-8 py-6 text-[10px] font-bold text-slate-500 uppercase">{staff.find(s => s.id === record.staffId)?.fullName || 'Teacher'}</td>
                         <td className="px-8 py-6 text-center">

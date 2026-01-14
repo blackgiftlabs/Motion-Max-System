@@ -15,19 +15,23 @@ import {
   Download,
   Loader2,
   CheckCircle2,
-  MessageSquare
+  MessageSquare,
+  ClipboardList,
+  Target,
+  AlertTriangle
 } from 'lucide-react';
-import { Student, SessionLog } from '../types';
+import { Student, SessionLog, MilestoneRecord } from '../types';
 import { generateStudentReport } from '../utils/reportGenerator';
 
 type TimeFilter = 'Week' | 'Month' | 'Year' | 'All';
 
 export const AdminClinicalLogs: React.FC = () => {
-  const { students, clinicalLogs, user, parents } = useStore();
+  const { students, clinicalLogs, milestoneRecords, user, parents } = useStore();
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('All');
+  const [activeTab, setActiveTab] = useState<'sessions' | 'checklists'>('sessions');
   const [activeLog, setActiveLog] = useState<SessionLog | null>(null);
+  const [activeMilestone, setActiveMilestone] = useState<MilestoneRecord | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   const isRestrictedRole = user?.role === 'STUDENT' || user?.role === 'PARENT';
@@ -49,18 +53,33 @@ export const AdminClinicalLogs: React.FC = () => {
 
   const studentLogs = useMemo(() => {
     if (!selectedStudent) return [];
-    let logs = clinicalLogs.filter(log => log.studentId === selectedStudent.id);
-    return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return clinicalLogs
+      .filter(log => log.studentId === selectedStudent.id)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [selectedStudent, clinicalLogs]);
 
+  const studentMilestones = useMemo(() => {
+    if (!selectedStudent) return [];
+    return milestoneRecords
+      .filter(m => m.studentId === selectedStudent.id)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [selectedStudent, milestoneRecords]);
+
   const handleExportPDF = async () => {
-    if (!selectedStudent || !activeLog) return;
+    if (!selectedStudent) return;
     setIsExporting(true);
-    await generateStudentReport(selectedStudent, [activeLog], [], `${activeLog.targetBehavior} Report`);
-    setIsExporting(false);
+    try {
+      if (activeTab === 'sessions' && activeLog) {
+        await generateStudentReport(selectedStudent, [activeLog], [], `${activeLog.targetBehavior} Report`);
+      } else if (activeTab === 'checklists' && activeMilestone) {
+        await generateStudentReport(selectedStudent, [], [activeMilestone], `${activeMilestone.ageCategory} Assessment`);
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  if (!selectedStudent) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-slate-400">Loading Records...</div>;
+  if (!selectedStudent) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-slate-400">Syncing Records...</div>;
 
   return (
     <div className="space-y-1 animate-in fade-in duration-500 pb-10 selection:bg-blue-100">
@@ -80,37 +99,73 @@ export const AdminClinicalLogs: React.FC = () => {
              </div>
           </div>
         </div>
+
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+          <button 
+            onClick={() => { setActiveTab('sessions'); setActiveMilestone(null); }}
+            className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'sessions' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+          >
+            Lesson Logs
+          </button>
+          <button 
+            onClick={() => { setActiveTab('checklists'); setActiveLog(null); }}
+            className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'checklists' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+          >
+            Checklists
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
         <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 space-y-1 h-fit">
            <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-[0.3em] mb-4 flex items-center gap-2 px-2">
-              <Calendar size={12} /> List of Reports
+              <Calendar size={12} /> {activeTab === 'sessions' ? 'Past Lessons' : 'Past Checklists'}
            </h3>
            <div className="space-y-1 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
-              {studentLogs.length === 0 ? (
-                <p className="text-[9px] font-bold text-slate-300 text-center py-10 uppercase italic">Empty archive</p>
-              ) : studentLogs.map(log => (
-                <button 
-                  key={log.id} 
-                  onClick={() => setActiveLog(log)}
-                  className={`w-full flex items-center justify-between p-4 border transition-all text-left group ${activeLog?.id === log.id ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 hover:border-blue-600'}`}
-                >
-                  <div>
-                    <p className="text-[10px] font-black uppercase leading-none mb-1">{new Date(log.date).toLocaleDateString()}</p>
-                    <p className={`text-[8px] font-bold uppercase truncate w-32 ${activeLog?.id === log.id ? 'text-slate-400' : 'text-slate-500'}`}>{log.targetBehavior}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-black font-mono">+{log.independenceScore}%</span>
-                    <ChevronRight size={12} className={activeLog?.id === log.id ? 'text-blue-400' : 'text-slate-200'} />
-                  </div>
-                </button>
-              ))}
+              {activeTab === 'sessions' ? (
+                studentLogs.length === 0 ? (
+                  <p className="text-[9px] font-bold text-slate-300 text-center py-10 uppercase italic">Empty archive</p>
+                ) : studentLogs.map(log => (
+                  <button 
+                    key={log.id} 
+                    onClick={() => setActiveLog(log)}
+                    className={`w-full flex items-center justify-between p-4 border transition-all text-left group ${activeLog?.id === log.id ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 hover:border-blue-600'}`}
+                  >
+                    <div>
+                      <p className="text-[10px] font-black uppercase leading-none mb-1">{new Date(log.date).toLocaleDateString()}</p>
+                      <p className={`text-[8px] font-bold uppercase truncate w-32 ${activeLog?.id === log.id ? 'text-slate-400' : 'text-slate-500'}`}>{log.targetBehavior}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] font-black font-mono">+{log.independenceScore}%</span>
+                      <ChevronRight size={12} className={activeLog?.id === log.id ? 'text-blue-400' : 'text-slate-200'} />
+                    </div>
+                  </button>
+                ))
+              ) : (
+                studentMilestones.length === 0 ? (
+                  <p className="text-[9px] font-bold text-slate-300 text-center py-10 uppercase italic">No checklists</p>
+                ) : studentMilestones.map(m => (
+                  <button 
+                    key={m.id} 
+                    onClick={() => setActiveMilestone(m)}
+                    className={`w-full flex items-center justify-between p-4 border transition-all text-left group ${activeMilestone?.id === m.id ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 hover:border-emerald-600'}`}
+                  >
+                    <div>
+                      <p className="text-[10px] font-black uppercase leading-none mb-1">{new Date(m.timestamp).toLocaleDateString()}</p>
+                      <p className={`text-[8px] font-bold uppercase truncate w-32 ${activeMilestone?.id === m.id ? 'text-slate-400' : 'text-slate-500'}`}>{m.ageCategory}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] font-black font-mono">+{m.overallPercentage}%</span>
+                      <ChevronRight size={12} className={activeMilestone?.id === m.id ? 'text-emerald-400' : 'text-slate-200'} />
+                    </div>
+                  </button>
+                ))
+              )}
            </div>
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none overflow-hidden min-h-[500px]">
-           {activeLog ? (
+           {(activeTab === 'sessions' && activeLog) ? (
              <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50">
                    <div>
@@ -152,10 +207,62 @@ export const AdminClinicalLogs: React.FC = () => {
                    )}
                 </div>
              </div>
+           ) : (activeTab === 'checklists' && activeMilestone) ? (
+             <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50">
+                   <div>
+                      <span className="text-[8px] font-black uppercase text-emerald-600 tracking-widest">Assessment Category</span>
+                      <h4 className="text-xl font-black uppercase text-slate-900 dark:text-white tracking-tight leading-none mt-1">{activeMilestone.ageCategory}</h4>
+                   </div>
+                   <button onClick={handleExportPDF} disabled={isExporting} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-blue-600 transition-all">
+                      {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                   </button>
+                </div>
+                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-8">
+                   <div className="flex items-center justify-center p-8 bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-100 dark:border-emerald-800">
+                      <div className="text-center">
+                         <p className="text-[10px] font-black uppercase text-emerald-600 mb-2 tracking-widest">Overall Independence</p>
+                         <p className="text-5xl font-black font-mono text-emerald-700 dark:text-emerald-400">{activeMilestone.overallPercentage}%</p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-10">
+                      {activeMilestone.sections.map((section, sIdx) => (
+                        <div key={sIdx} className="space-y-4">
+                           <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">{section.title}</h5>
+                           <div className="grid grid-cols-1 gap-2">
+                              {section.items.map((item, iIdx) => (
+                                <div key={iIdx} className={`flex items-center justify-between p-4 border transition-all ${item.checked ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent'}`}>
+                                   <p className={`text-xs font-bold ${item.checked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>{item.text}</p>
+                                   {item.checked ? <CheckCircle2 size={16} className="text-emerald-600" /> : <X size={16} className="text-slate-200" />}
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      ))}
+
+                      {activeMilestone.redFlags && activeMilestone.redFlags.length > 0 && (
+                        <div className="space-y-4 pt-4">
+                           <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-500 flex items-center gap-2">
+                              <AlertTriangle size={14}/> Critical Observations (Red Flags)
+                           </h5>
+                           <div className="grid grid-cols-1 gap-2">
+                              {activeMilestone.redFlags.map((flag, fIdx) => (
+                                <div key={fIdx} className={`flex items-center justify-between p-4 border transition-all ${flag.checked ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent opacity-40'}`}>
+                                   <p className={`text-xs font-bold ${flag.checked ? 'text-rose-700 dark:text-rose-400' : 'text-slate-400'}`}>{flag.text}</p>
+                                   {flag.checked && <AlertTriangle size={16} className="text-rose-600" />}
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                   </div>
+                </div>
+             </div>
            ) : (
              <div className="h-full flex flex-col items-center justify-center text-center p-20 opacity-20">
-                <Brain size={64} className="mb-4 text-slate-400" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Select a report from the list</p>
+                {activeTab === 'sessions' ? <Brain size={64} className="mb-4 text-slate-400" /> : <ClipboardList size={64} className="mb-4 text-slate-400" />}
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Select a record from the list</p>
              </div>
            )}
         </div>

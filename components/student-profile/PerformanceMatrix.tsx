@@ -4,10 +4,11 @@ import {
   ChevronRight, Download, Loader2, Calendar, 
   X, Activity, Brain, Info, AlertTriangle, 
   Filter, CalendarDays, CheckCircle2, Search,
-  MessageSquare, Mic2, ExternalLink
+  MessageSquare, Mic2, ExternalLink, ClipboardList, Archive
 } from 'lucide-react';
 import { SessionLog, MilestoneRecord, Student } from '../../types';
-import { generateStudentReport } from '../../utils/reportGenerator';
+import { generateStudentReport, generateFullStudentHistoryReport } from '../../utils/reportGenerator';
+import { formatHarareDate, getHarareDayNum, getHarareDayName } from '../../utils/dateUtils';
 
 interface Props {
   student: Student;
@@ -24,7 +25,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Utility: Get week number of the year
+// Utility: Get week number of the year (Harare perspective)
 const getWeekNumber = (d: Date) => {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -33,7 +34,6 @@ const getWeekNumber = (d: Date) => {
   return weekNo;
 };
 
-// Utility: Get start of a specific week number
 const getDateOfISOWeek = (w: number, y: number) => {
   const simple = new Date(y, 0, 1 + (w - 1) * 7);
   const dow = simple.getDay();
@@ -50,6 +50,7 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
   const [selectedWeek, setSelectedWeek] = useState(getWeekNumber(new Date()));
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [isArchiveExporting, setIsArchiveExporting] = useState(false);
   const [viewingUnit, setViewingUnit] = useState<{ 
     title: string; 
     logs: SessionLog[]; 
@@ -62,7 +63,7 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
   const weekList = Array.from({ length: 52 }, (_, i) => i + 1);
 
   const displayDays = useMemo(() => {
-    const todayDs = new Date().toISOString().split('T')[0];
+    const todayDs = formatHarareDate(new Date().toISOString());
     const results: any[] = [];
 
     if (viewMode === 'week') {
@@ -70,14 +71,14 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
       for (let i = 0; i < 5; i++) { // Mon to Fri
         const d = new Date(startOfWeek);
         d.setDate(startOfWeek.getDate() + i);
-        const ds = d.toISOString().split('T')[0];
+        const ds = formatHarareDate(d.toISOString());
         results.push({
           date: ds,
-          label: d.toLocaleDateString('en-US', { weekday: 'long' }),
-          dayNum: d.getDate(),
+          label: getHarareDayName(d.toISOString()),
+          dayNum: getHarareDayNum(d.toISOString()),
           isToday: ds === todayDs,
-          logs: studentLogs.filter(l => l.date.split('T')[0] === ds),
-          milestones: studentMilestones.filter(m => m.timestamp.split('T')[0] === ds)
+          logs: studentLogs.filter(l => formatHarareDate(l.date) === ds),
+          milestones: studentMilestones.filter(m => formatHarareDate(m.timestamp) === ds)
         });
       }
     } else {
@@ -96,15 +97,15 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
         for (let i = 0; i < 5; i++) {
           const d = new Date(current);
           d.setDate(current.getDate() + i);
-          const ds = d.toISOString().split('T')[0];
+          const ds = formatHarareDate(d.toISOString());
           if (d.getMonth() === selectedMonth) {
             weekDays.push({
               date: ds,
-              label: d.toLocaleDateString('en-US', { weekday: 'long' }),
-              dayNum: d.getDate(),
+              label: getHarareDayName(d.toISOString()),
+              dayNum: getHarareDayNum(d.toISOString()),
               isToday: ds === todayDs,
-              logs: studentLogs.filter(l => l.date.split('T')[0] === ds),
-              milestones: studentMilestones.filter(m => m.timestamp.split('T')[0] === ds)
+              logs: studentLogs.filter(l => formatHarareDate(l.date) === ds),
+              milestones: studentMilestones.filter(m => formatHarareDate(m.timestamp) === ds)
             });
           }
         }
@@ -124,19 +125,27 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
     setIsExporting(null);
   };
 
+  const handleDownloadFullArchive = async () => {
+    setIsArchiveExporting(true);
+    try {
+      await generateFullStudentHistoryReport(student, studentLogs, studentMilestones);
+    } finally {
+      setIsArchiveExporting(false);
+    }
+  };
+
   const jumpToSession = (log: SessionLog) => {
     const logDate = new Date(log.date);
     const weekNum = getWeekNumber(logDate);
     setSelectedWeek(weekNum);
     setViewMode('week');
     
-    const dayLabel = logDate.toLocaleDateString('en-US', { weekday: 'long' });
-    const ds = logDate.toISOString().split('T')[0];
+    const ds = formatHarareDate(log.date);
     
     setViewingUnit({
-      title: `${dayLabel}, ${ds}`,
-      logs: studentLogs.filter(l => l.date.split('T')[0] === ds),
-      milestones: studentMilestones.filter(m => m.timestamp.split('T')[0] === ds)
+      title: `${getHarareDayName(log.date)}, ${ds}`,
+      logs: studentLogs.filter(l => formatHarareDate(l.date) === ds),
+      milestones: studentMilestones.filter(m => formatHarareDate(m.timestamp) === ds)
     });
   };
 
@@ -181,6 +190,14 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
             </select>
           </div>
         )}
+
+        <button 
+          onClick={handleDownloadFullArchive}
+          disabled={isArchiveExporting}
+          className="px-6 py-2 bg-emerald-600 text-white border-2 border-slate-950 font-black uppercase text-[10px] tracking-widest shadow-md active:scale-95 flex items-center gap-3 disabled:opacity-50"
+        >
+          {isArchiveExporting ? <Loader2 size={14} className="animate-spin" /> : <><Archive size={14} /> Full History Report</>}
+        </button>
       </div>
 
       <div className="bg-white dark:bg-slate-950 border-2 border-slate-950 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
@@ -231,6 +248,10 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
                         <span className="text-sm font-black font-mono leading-none">{item.logs.length}</span>
                         <span className="text-[7px] font-black uppercase text-slate-400 mt-1 tracking-widest">Sessions</span>
                      </div>
+                     <div className={`flex flex-col items-center text-center ${item.milestones.length > 0 ? 'opacity-100' : 'opacity-20'}`}>
+                        <span className="text-sm font-black font-mono leading-none">{item.milestones.length}</span>
+                        <span className="text-[7px] font-black uppercase text-slate-400 mt-1 tracking-widest">Checklists</span>
+                     </div>
                      <button 
                        disabled={!hasData}
                        onClick={() => setViewingUnit({ title: `${item.label}, ${item.date}`, logs: item.logs, milestones: item.milestones })}
@@ -266,6 +287,58 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones }
 
            <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 p-6 md:p-12 custom-scrollbar">
               <div className="max-w-4xl mx-auto space-y-8 pb-20">
+                 {/* Render Milestone Assessments First */}
+                 {viewingUnit.milestones.map((m) => (
+                   <div key={m.id} className="bg-white dark:bg-slate-900 border-2 border-slate-950 p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-none space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                      <header className="flex justify-between border-b-2 border-slate-100 dark:border-slate-800 pb-6">
+                         <div className="flex items-center gap-4">
+                            <div className="p-3 bg-emerald-600 text-white rounded-none shadow-lg"><ClipboardList size={24} /></div>
+                            <div>
+                               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-1">Milestone Assessment</p>
+                               <h4 className="text-xl font-black text-slate-950 dark:text-white uppercase leading-none">{m.ageCategory}</h4>
+                            </div>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Growth Score</p>
+                            <p className="text-4xl font-black font-mono text-emerald-600 leading-none">{m.overallPercentage}%</p>
+                         </div>
+                      </header>
+
+                      <div className="space-y-8">
+                         {m.sections.map((section, sIdx) => (
+                           <div key={sIdx} className="space-y-3">
+                              <h5 className="text-[9px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1">{section.title}</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                 {section.items.map((item, iIdx) => (
+                                   <div key={iIdx} className={`flex items-center justify-between p-4 text-[11px] font-bold border-2 transition-all ${item.checked ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-950/50 border-transparent'}`}>
+                                      <span className={item.checked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}>{item.text}</span>
+                                      {item.checked ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : <X size={14} className="text-slate-200 shrink-0" />}
+                                   </div>
+                                 ))}
+                              </div>
+                           </div>
+                         ))}
+
+                         {m.redFlags && m.redFlags.length > 0 && (
+                            <div className="p-6 bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-100 dark:border-rose-900/30">
+                               <h5 className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-4 flex items-center gap-2">
+                                  <AlertTriangle size={14}/> Critical Observations
+                               </h5>
+                               <div className="space-y-2">
+                                  {m.redFlags.map((flag, fIdx) => (
+                                    <div key={fIdx} className={`flex items-center justify-between p-3 ${flag.checked ? 'bg-white dark:bg-slate-900 border border-rose-200 text-rose-700' : 'opacity-30 grayscale'}`}>
+                                       <span className="text-[11px] font-bold">{flag.text}</span>
+                                       {flag.checked && <AlertTriangle size={14} className="text-rose-600 shrink-0" />}
+                                    </div>
+                                  ))}
+                               </div>
+                            </div>
+                         )}
+                      </div>
+                   </div>
+                 ))}
+
+                 {/* Render Lesson Logs */}
                  {viewingUnit.logs.map((log) => (
                    <div key={log.id} className="bg-white dark:bg-slate-900 border-2 border-slate-950 p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-none space-y-8 animate-in fade-in zoom-in-95 duration-300">
                       <header className="flex justify-between border-b-2 border-slate-100 dark:border-slate-800 pb-6">
