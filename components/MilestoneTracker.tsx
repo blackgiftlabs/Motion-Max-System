@@ -7,6 +7,7 @@ import {
   Activity, Clock, Play, Layers, User, Calendar, X
 } from 'lucide-react';
 import { Student, MilestoneRecord, MilestoneItem } from '../types';
+import { getHarareISOString } from '../utils/dateUtils';
 
 // ECDC Milestone Data Definitions
 const MILESTONE_TEMPLATES = [
@@ -134,7 +135,8 @@ export const MilestoneTracker: React.FC = () => {
         ageCategory: template?.label || activeTemplateId,
         sections: localData.sections,
         redFlags: localData.redFlags,
-        overallPercentage: calculateCompletion()
+        overallPercentage: calculateCompletion(),
+        timestamp: getHarareISOString()
       });
       setSelectedStudentIdForLog(null);
     } finally {

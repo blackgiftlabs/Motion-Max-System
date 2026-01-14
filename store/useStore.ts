@@ -161,7 +161,7 @@ interface AppState {
   clearCart: () => void;
   placeOrder: (orderData: Omit<Order, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'staffId'>) => Promise<void>;
+  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'staffId' | 'timestamp'> & { timestamp?: string }) => Promise<void>;
   saveMilestoneTemplate: (template: MilestoneTemplate) => Promise<void>;
   deleteMilestoneTemplate: (id: string) => Promise<void>;
   addPayment: (payment: Omit<PaymentRecord, 'id' | 'qrCodeUrl' | 'verificationHash'>) => Promise<void>;

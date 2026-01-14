@@ -34,8 +34,22 @@ const addFooter = (doc: jsPDF, pageWidth: number) => {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Page ${i} of ${pageCount} | Motion Max Official Clinical Archive | Confidential Document`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+    doc.text(`Page ${i} of ${pageCount} | Official Motion Max Clinical Archive | CONFIDENTIAL`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
   }
+};
+
+const drawPromptLegend = (doc: jsPDF, startY: number) => {
+  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(0).text("CLINICAL PROMPT LEGEND", 15, startY);
+  autoTable(doc, {
+    startY: startY + 4,
+    head: [['Symbol', 'Support Level', 'Description']],
+    body: PROMPT_LEVELS.map(p => [p.key, p.label, `Applied during session to assist student performance.`]),
+    theme: 'grid',
+    headStyles: { fillColor: [0, 45, 80], fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 20 } },
+    margin: { left: 15, right: 15 }
+  });
 };
 
 export const generateStudentReport = async (student: Student, logs: SessionLog[], milestones: MilestoneRecord[], title: string) => {
@@ -107,9 +121,9 @@ export const generateFullStudentHistoryReport = async (student: Student, logs: S
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // --- PAGE 1: COVER & LEGEND ---
+  // --- PAGE 1: PROFESSIONAL COVER & CLINICAL DATA SUMMARY ---
   addHeader(doc, pageWidth);
-  doc.setFontSize(22);
+  doc.setFontSize(26);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 45, 80);
   doc.text("FULL CLINICAL HISTORY", 15, 60);
@@ -118,33 +132,29 @@ export const generateFullStudentHistoryReport = async (student: Student, logs: S
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100);
   doc.text(`Student Identity: ${student.fullName} (ID: ${student.id})`, 15, 70);
-  doc.text(`Classroom Group: ${student.assignedClass}`, 15, 76);
+  doc.text(`Classroom Node: ${student.assignedClass}`, 15, 76);
   doc.text(`Archive Depth: ${logs.length} Sessions | ${milestones.length} Assessments`, 15, 82);
-  doc.text(`Date of Export: ${getHarareDisplayDate(new Date().toISOString())}`, 15, 88);
+  doc.text(`Registry Export Date: ${getHarareDisplayDate(new Date().toISOString())}`, 15, 88);
 
-  // Symbol Legend Table
-  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(0).text("CLINICAL PROMPT LEGEND", 15, 105);
-  autoTable(doc, {
-    startY: 110,
-    head: [['Symbol', 'Meaning', 'Clinical Description']],
-    body: PROMPT_LEVELS.map(p => [p.key, p.label, `Support level applied during trial marking.`]),
-    theme: 'grid',
-    headStyles: { fillColor: [0, 45, 80], fontSize: 8 },
-    bodyStyles: { fontSize: 8 },
-    margin: { left: 15, right: 15 }
-  });
+  // Prompt Legend
+  drawPromptLegend(doc, 105);
 
-  // Summary Metrics
+  // Summary Performance Metrics
   const avgSession = logs.length > 0 ? Math.round(logs.reduce((a, b) => a + b.independenceScore, 0) / logs.length) : 0;
   const avgMilestone = milestones.length > 0 ? Math.round(milestones.reduce((a, b) => a + b.overallPercentage, 0) / milestones.length) : 0;
 
   // @ts-ignore
-  let startY = doc.lastAutoTable.finalY + 15;
+  let metricsY = doc.lastAutoTable.finalY + 20;
   doc.setFillColor(245, 247, 250);
-  doc.rect(15, startY, pageWidth - 30, 25, 'F');
-  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(0).text("AGGREGATE PERFORMANCE DATA", 20, startY + 10);
-  doc.setFont("helvetica", "normal").setFontSize(9).text(`Average Lesson Independence: ${avgSession}%`, 20, startY + 18);
-  doc.text(`Average Milestone Completion: ${avgMilestone}%`, pageWidth / 2, startY + 18);
+  doc.rect(15, metricsY, pageWidth - 30, 35, 'F');
+  doc.setDrawColor(0, 45, 80);
+  doc.setLineWidth(0.5);
+  doc.line(15, metricsY, 15, metricsY + 35);
+  
+  doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0).text("AGGREGATE CLINICAL PERFORMANCE", 22, metricsY + 12);
+  doc.setFont("helvetica", "normal").setFontSize(10).text(`Average Session Independence: ${avgSession}%`, 22, metricsY + 22);
+  doc.text(`Average Milestone Completion: ${avgMilestone}%`, pageWidth / 2 + 10, metricsY + 22);
+  doc.setFontSize(8).setTextColor(150).text("Data calculated across all recorded terminal sessions for the entire enrollment period.", 22, metricsY + 30);
 
   // Group Records by Month
   const allRecords = [
@@ -159,106 +169,111 @@ export const generateFullStudentHistoryReport = async (student: Student, logs: S
     grouped[month].push(rec);
   });
 
-  // --- DATA PAGES ---
+  // --- DATA PAGES LOOP ---
   Object.entries(grouped).forEach(([month, items]) => {
     doc.addPage();
     let currentY = 20;
     
-    // Month Header
+    // Month Section Header
     doc.setFillColor(0, 45, 80);
-    doc.rect(0, currentY, pageWidth, 12, 'F');
-    doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(255);
-    doc.text(month.toUpperCase(), 15, currentY + 8);
+    doc.rect(0, currentY, pageWidth, 15, 'F');
+    doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(255);
+    doc.text(month.toUpperCase(), 15, currentY + 10);
     doc.setTextColor(0);
-    currentY += 20;
+    currentY += 25;
 
     items.forEach((item, idx) => {
       if (item.type === 'log') {
         const log = item.data as SessionLog;
-        if (currentY > 230) { doc.addPage(); currentY = 20; }
+        if (currentY > 220) { doc.addPage(); currentY = 20; }
         
-        doc.setFont("helvetica", "bold").setFontSize(10).text(`${getHarareDisplayDate(log.date)} - LESSON: ${log.targetBehavior.toUpperCase()}`, 15, currentY);
-        doc.setFont("helvetica", "normal").setFontSize(8).text(`Method: ${log.method} | Score: ${log.independenceScore}%`, 15, currentY + 4);
+        doc.setFont("helvetica", "bold").setFontSize(11).text(`${getHarareDisplayDate(log.date)} - LESSON: ${log.targetBehavior.toUpperCase()}`, 15, currentY);
+        doc.setFont("helvetica", "normal").setFontSize(9).text(`Teaching Method: ${log.method} | Independence Score: ${log.independenceScore}%`, 15, currentY + 5);
         
-        // Detailed Task Table
+        // Comprehensive Task Table
         autoTable(doc, {
-          startY: currentY + 6,
-          head: [['Step', 'Description', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10']],
-          body: log.steps.map((s, sidx) => [(sidx + 1).toString(), s.description, ...s.trials]),
+          startY: currentY + 8,
+          head: [['#', 'Task Step Description', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'STAT']],
+          body: log.steps.map((s, sidx) => [(sidx + 1).toString(), s.description, ...s.trials, s.trials.includes('+') ? 'OK' : 'HLP']),
           theme: 'striped',
-          headStyles: { fillColor: [100, 116, 139], fontSize: 6 },
-          bodyStyles: { fontSize: 6 },
-          columnStyles: { 1: { cellWidth: 50 } },
+          headStyles: { fillColor: [71, 85, 105], fontSize: 6.5 },
+          bodyStyles: { fontSize: 6.5 },
+          columnStyles: { 1: { cellWidth: 55 }, 12: { fontStyle: 'bold' } },
           margin: { left: 15, right: 15 }
         });
 
         // @ts-ignore
-        currentY = doc.lastAutoTable.finalY + 6;
+        currentY = doc.lastAutoTable.finalY + 8;
 
         if (log.comment) {
-          doc.setFont("helvetica", "bold").setFontSize(7).text("Observation:", 15, currentY);
+          doc.setFont("helvetica", "bold").setFontSize(8).text("Therapist Observation:", 15, currentY);
           const split = doc.splitTextToSize(log.comment, pageWidth - 40);
-          doc.setFont("helvetica", "italic").text(split, 15, currentY + 3);
-          currentY += (split.length * 3.5) + 6;
+          doc.setFont("helvetica", "italic").text(split, 15, currentY + 4);
+          currentY += (split.length * 4) + 8;
         }
 
         if (log.programRequests && log.programRequests.length > 0) {
-          if (currentY > 240) { doc.addPage(); currentY = 20; }
+          if (currentY > 230) { doc.addPage(); currentY = 20; }
+          doc.setFont("helvetica", "bold").setFontSize(8).text("Speech & Sound Monitoring Hub:", 15, currentY);
           autoTable(doc, {
-            startY: currentY,
-            head: [['Speech Activity', 'Echoic', 'Non-Verbal', 'Independent']],
+            startY: currentY + 3,
+            head: [['Activity Focus', 'Echoic (HLP)', 'Non-Verbal (TRY)', 'Independent (OK)']],
             body: log.programRequests.map(r => [r.activity, r.echoicTempted.toString(), r.noVerbalTempted.toString(), r.noEchoicNoTempting.toString()]),
-            theme: 'grid',
-            headStyles: { fillColor: [5, 150, 105], fontSize: 6 },
-            bodyStyles: { fontSize: 6 },
-            margin: { left: 15, right: 15 }
-          });
-          // @ts-ignore
-          currentY = doc.lastAutoTable.finalY + 10;
-        } else {
-          currentY += 5;
-        }
-      } else {
-        const m = item.data as MilestoneRecord;
-        if (currentY > 230) { doc.addPage(); currentY = 20; }
-        
-        doc.setFillColor(240, 253, 244);
-        doc.rect(15, currentY - 4, pageWidth - 30, 10, 'F');
-        doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(5, 150, 105);
-        doc.text(`${getHarareDisplayDate(m.timestamp)} - ASSESSMENT: ${m.ageCategory}`, 18, currentY + 2);
-        doc.setFont("helvetica", "normal").setFontSize(8).text(`Mastery Score: ${m.overallPercentage}%`, pageWidth - 20, currentY + 2, { align: 'right' });
-        doc.setTextColor(0);
-        currentY += 12;
-
-        m.sections.forEach(section => {
-          if (currentY > 240) { doc.addPage(); currentY = 20; }
-          doc.setFont("helvetica", "bold").setFontSize(8).text(section.title, 15, currentY);
-          autoTable(doc, {
-            startY: currentY + 2,
-            head: [['Requirement', 'Status']],
-            body: section.items.map(i => [i.text, i.checked ? 'MASTERED' : 'PENDING']),
             theme: 'grid',
             headStyles: { fillColor: [5, 150, 105], fontSize: 7 },
             bodyStyles: { fontSize: 7 },
             margin: { left: 15, right: 15 }
           });
           // @ts-ignore
-          currentY = doc.lastAutoTable.finalY + 8;
+          currentY = doc.lastAutoTable.finalY + 12;
+        } else {
+          currentY += 6;
+        }
+      } else {
+        // Milestone Records
+        const m = item.data as MilestoneRecord;
+        if (currentY > 230) { doc.addPage(); currentY = 20; }
+        
+        doc.setFillColor(240, 253, 244);
+        doc.rect(15, currentY - 5, pageWidth - 30, 12, 'F');
+        doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(5, 150, 105);
+        doc.text(`${getHarareDisplayDate(m.timestamp)} - MILESTONE ASSESSMENT: ${m.ageCategory}`, 20, currentY + 3);
+        doc.setFont("helvetica", "normal").setFontSize(9).text(`Clinical Mastery: ${m.overallPercentage}%`, pageWidth - 25, currentY + 3, { align: 'right' });
+        doc.setTextColor(0);
+        currentY += 15;
+
+        m.sections.forEach(section => {
+          if (currentY > 240) { doc.addPage(); currentY = 20; }
+          doc.setFont("helvetica", "bold").setFontSize(9).text(`Category Block: ${section.title}`, 15, currentY);
+          autoTable(doc, {
+            startY: currentY + 3,
+            head: [['Requirement Item Description', 'Status']],
+            body: section.items.map(i => [i.text, i.checked ? 'MASTERED' : 'PENDING']),
+            theme: 'grid',
+            headStyles: { fillColor: [5, 150, 105], fontSize: 7.5 },
+            bodyStyles: { fontSize: 7.5 },
+            columnStyles: { 1: { cellWidth: 30, fontStyle: 'bold' } },
+            margin: { left: 15, right: 15 }
+          });
+          // @ts-ignore
+          currentY = doc.lastAutoTable.finalY + 10;
         });
 
         if (m.redFlags && m.redFlags.some(f => f.checked)) {
           if (currentY > 240) { doc.addPage(); currentY = 20; }
-          doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(200, 0, 0).text("RED FLAGS DETECTED:", 15, currentY);
+          doc.setFillColor(254, 242, 242);
+          doc.rect(15, currentY, pageWidth - 30, 20, 'F');
+          doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(200, 0, 0).text("CRITICAL OBSERVATIONS (RED FLAGS) DETECTED:", 20, currentY + 8);
           const flags = m.redFlags.filter(f => f.checked).map(f => f.text).join(", ");
-          const splitFlags = doc.splitTextToSize(flags, pageWidth - 40);
-          doc.setFont("helvetica", "normal").text(splitFlags, 15, currentY + 4);
+          const splitFlags = doc.splitTextToSize(flags, pageWidth - 45);
+          doc.setFont("helvetica", "normal").setFontSize(8).text(splitFlags, 20, currentY + 14);
           doc.setTextColor(0);
-          currentY += (splitFlags.length * 4) + 10;
+          currentY += (splitFlags.length * 4) + 15;
         }
       }
     });
   });
 
   addFooter(doc, pageWidth);
-  doc.save(`${student.lastName}_History_Archive.pdf`);
+  doc.save(`${student.lastName}_History_Archive_${student.id}.pdf`);
 };
